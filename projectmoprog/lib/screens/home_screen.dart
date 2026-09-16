@@ -14,10 +14,11 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final ContactService _service = ContactService();
   final TextEditingController _searchController = TextEditingController();
-  
   List<ContactModel> _allContacts = [];
   List<ContactModel> _filteredContacts = [];
   bool _isLoading = true;
+  String _selectedTag = 'All';
+  final List<String> _availableTags = ['All', 'Trusted', 'Spam Likely', 'Unknown'];
 
   @override
   void initState() {
@@ -41,12 +42,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
     setState(() {
       _allContacts = updatedContacts;
-      if (_searchController.text.isNotEmpty) {
-        _filterContacts(_searchController.text);
-      } else {
-        _filteredContacts = updatedContacts;
-      }
     });
+
+    _filterContacts();
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -58,20 +56,16 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _filterContacts(String query) {
-    List<ContactModel> results = [];
-    if (query.isEmpty) {
-      results = _allContacts;
-    } else {
-      results = _allContacts.where((contact) {
-        final nameMatch = contact.name.toLowerCase().contains(query.toLowerCase());
-        final phoneMatch = contact.phoneNumber.contains(query);
-        return nameMatch || phoneMatch;
-      }).toList();
-    }
-
+  void _filterContacts() {
+    final query = _searchController.text.toLowerCase();
     setState(() {
-      _filteredContacts = results;
+      _filteredContacts = _allContacts.where((contact) {
+        final nameMatch = contact.name.toLowerCase().contains(query);
+        final phoneMatch = contact.phoneNumber.contains(query);
+        final textMatch = nameMatch || phoneMatch;
+        final tagMatch = _selectedTag == 'All' || contact.tag == _selectedTag;
+        return textMatch && tagMatch;
+      }).toList();
     });
   }
 
@@ -89,26 +83,62 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: _isLoading ? const Center(child: CircularProgressIndicator()) : Column(
         children: [
-          Padding(
+          Container(
+            color: Colors.white,
             padding: const EdgeInsets.all(12.0),
-            child: TextField(
-              controller: _searchController,
-              onChanged: _filterContacts,
-              decoration: InputDecoration(
-                hintText: 'Search by name or phone number...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
-                  borderSide: BorderSide.none,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: _searchController,
+                  onChanged: (value) => _filterContacts(),
+                  decoration: InputDecoration(
+                    hintText: 'Search by name or phone number...',
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide.none,
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey.shade200,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                  ),
                 ),
-                filled: true,
-                fillColor: Colors.grey.shade200,
-                contentPadding: const EdgeInsets.symmetric(vertical: 0),
-              ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 36,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _availableTags.length,
+                    itemBuilder: (context, index) {
+                      final tag = _availableTags[index];
+                      final isSelected = _selectedTag == tag;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: ChoiceChip(
+                          label: Text(tag == 'All' ? 'Semua' : tag),
+                          selected: isSelected,
+                          selectedColor: Colors.blue.shade100,
+                          labelStyle: TextStyle(
+                            color: isSelected ? Colors.blue.shade900 : Colors.black87,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          ),
+                          onSelected: (selected) {
+                            setState(() {
+                              _selectedTag = tag;
+                            });
+                            _filterContacts();
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
           Expanded(
-            child: _filteredContacts.isEmpty ? const Center(child: Text("Contact not found")) : ListView.builder(
+            child: _filteredContacts.isEmpty ? const Center(child: Text("Contact not Found!")) : ListView.builder(
               itemCount: _filteredContacts.length,
               itemBuilder: (context, index) {
                 final contact = _filteredContacts[index];
