@@ -34,6 +34,30 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  Future<void> _handleReport(ContactModel contact, String reason) async {
+    await _service.reportContact(contact.id, reason);
+
+    final updatedContacts = await _service.getContacts();
+
+    setState(() {
+      _allContacts = updatedContacts;
+      if (_searchController.text.isNotEmpty) {
+        _filterContacts(_searchController.text);
+      } else {
+        _filteredContacts = updatedContacts;
+      }
+    });
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Nomor ${contact.phoneNumber} dilaporkan sebagai '$reason'"),
+        backgroundColor: Colors.redAccent,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   void _filterContacts(String query) {
     List<ContactModel> results = [];
     if (query.isEmpty) {
@@ -86,8 +110,13 @@ class _HomeScreenState extends State<HomeScreen> {
           Expanded(
             child: _filteredContacts.isEmpty ? const Center(child: Text("Contact not found")) : ListView.builder(
               itemCount: _filteredContacts.length,
-              itemBuilder: (context, index) =>
-                ContactCard(contact: _filteredContacts[index]),
+              itemBuilder: (context, index) {
+                final contact = _filteredContacts[index];
+                return ContactCard(
+                  contact: contact,
+                  onReport: (reason) => _handleReport(contact, reason),
+                );
+              },
             ),
           ),
         ],
