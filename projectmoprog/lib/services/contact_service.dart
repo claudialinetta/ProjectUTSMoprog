@@ -1,9 +1,7 @@
 import '../models/contact_model.dart';
 
 class ContactService {
-  Future<List<ContactModel>> getContacts() async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    return [
+  static final List<ContactModel> _contacts = [
       ContactModel(
         id: "1",
         name: "Bagas Dribble",
@@ -36,6 +34,19 @@ class ContactService {
         reportCount: 4,
         avatarInitial: "DC",
       ),
-    ];
+  ];
+  
+  Future<List<ContactModel>> getContacts() async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    return _contacts;
+  }
+
+  Future<void> reportContact(String contactId, String reason) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    final index = _contacts.indexWhere((c) => c.id == contactId);
+    if (index != -1) {
+      _contacts[index].reportCount += 1;
+      _contacts[index].refreshHeadlineTag();
+    }
   }
 }
