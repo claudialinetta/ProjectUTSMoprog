@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:projectmoprog/screens/splash_screen.dart';
 
 import 'theme/app_theme.dart';
 import 'screens/nav_screen.dart';
