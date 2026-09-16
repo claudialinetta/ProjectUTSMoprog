@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:projectmoprog/screens/splash_screen.dart';
 
 import 'theme/app_theme.dart';
 import 'screens/home_screen.dart';
@@ -16,7 +17,7 @@ class MyApp extends StatelessWidget {
       title: 'GetContact Clone',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const HomeScreen(),
+      home: const SplashScreen(),
     );
   }
 }
