@@ -27,20 +27,34 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _fetchData() async {
-    final contacts = await _service.getContacts();
-    setState(() {
-      _allContacts = contacts;
-      _filteredContacts = contacts;
-      _isLoading = false;
-    });
+    try {
+      final contacts = await _service.getContacts();
+      setState(() {
+        _allContacts = contacts;
+        _filteredContacts = contacts;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false; 
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load data: $e')),
+        );
+      }
+    }
   }
 
   void _filterContacts() {
     final query = _searchController.text.toLowerCase();
+    final cleanQuery = query.replaceAll(RegExp(r'[\s\-]'), '');
     setState(() {
       _filteredContacts = _allContacts.where((contact) {
         final nameMatch = contact.name.toLowerCase().contains(query);
-        final phoneMatch = contact.phoneNumber.contains(query);
+        final cleanPhone = contact.phoneNumber.replaceAll(RegExp(r'[\s\-]'), '');
+        final phoneMatch = cleanPhone.contains(cleanQuery);
         final textMatch = nameMatch || phoneMatch;
         final tagMatch = _selectedTag == 'All' || contact.tag == _selectedTag;
         return textMatch && tagMatch;
@@ -95,7 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       return Padding(
                         padding: const EdgeInsets.only(right: 8.0),
                         child: ChoiceChip(
-                          label: Text(tag == 'All' ? 'Semua' : tag),
+                          label: Text(tag == 'All' ? 'All' : tag),
                           selected: isSelected,
                           selectedColor: Colors.blue.shade100,
                           labelStyle: TextStyle(
