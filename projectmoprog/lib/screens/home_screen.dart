@@ -14,11 +14,10 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final ContactService _service = ContactService();
   final TextEditingController _searchController = TextEditingController();
+
   List<ContactModel> _allContacts = [];
   List<ContactModel> _filteredContacts = [];
   bool _isLoading = true;
-  String _selectedTag = 'All';
-  final List<String> _availableTags = ['All', 'Trusted', 'Spam Likely', 'Unknown'];
 
   @override
   void initState() {
@@ -29,6 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _fetchData() async {
     try {
       final contacts = await _service.getContacts();
+
       setState(() {
         _allContacts = contacts;
         _filteredContacts = contacts;
@@ -36,49 +36,32 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     } catch (e) {
       setState(() {
-        _isLoading = false; 
+        _isLoading = false;
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load data: $e')),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Failed to load data: $e')));
       }
     }
-  }
-
-  Future<void> _handleReport(ContactModel contact, String reason) async {
-    await _service.reportContact(contact.id, reason);
-
-    final updatedContacts = await _service.getContacts();
-
-    setState(() {
-      _allContacts = updatedContacts;
-    });
-
-    _filterContacts();
-
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("Nomor ${contact.phoneNumber} dilaporkan sebagai '$reason'"),
-        backgroundColor: Colors.redAccent,
-        duration: const Duration(seconds: 2),
-      ),
-    );
   }
 
   void _filterContacts() {
     final query = _searchController.text.toLowerCase();
     final cleanQuery = query.replaceAll(RegExp(r'[\s\-]'), '');
+
     setState(() {
       _filteredContacts = _allContacts.where((contact) {
         final nameMatch = contact.name.toLowerCase().contains(query);
-        final cleanPhone = contact.phoneNumber.replaceAll(RegExp(r'[\s\-]'), '');
+
+        final cleanPhone = contact.phoneNumber.replaceAll(
+          RegExp(r'[\s\-]'),
+          '',
+        );
+
         final phoneMatch = cleanPhone.contains(cleanQuery);
-        final textMatch = nameMatch || phoneMatch;
-        final tagMatch = _selectedTag == 'All' || contact.tag == _selectedTag;
-        return textMatch && tagMatch;
+
+        return nameMatch || phoneMatch;
       }).toList();
     });
   }
@@ -92,79 +75,44 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("GetContact Clone"),
-      ),
-      body: _isLoading ? const Center(child: CircularProgressIndicator()) : Column(
-        children: [
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      appBar: AppBar(title: const Text("GetContact Clone")),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
               children: [
-                TextField(
-                  controller: _searchController,
-                  onChanged: (value) => _filterContacts(),
-                  decoration: InputDecoration(
-                    hintText: 'Search by name or phone number...',
-                    prefixIcon: const Icon(Icons.search),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: BorderSide.none,
+                Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.all(12.0),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (value) => _filterContacts(),
+                    decoration: InputDecoration(
+                      hintText: 'Search by name or phone number...',
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30),
+                        borderSide: BorderSide.none,
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey.shade200,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 0),
                     ),
-                    filled: true,
-                    fillColor: Colors.grey.shade200,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 0),
                   ),
                 ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  height: 36,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _availableTags.length,
-                    itemBuilder: (context, index) {
-                      final tag = _availableTags[index];
-                      final isSelected = _selectedTag == tag;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
-                        child: ChoiceChip(
-                          label: Text(tag == 'All' ? 'All' : tag),
-                          selected: isSelected,
-                          selectedColor: Colors.blue.shade100,
-                          labelStyle: TextStyle(
-                            color: isSelected ? Colors.blue.shade900 : Colors.black87,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                          ),
-                          onSelected: (selected) {
-                            setState(() {
-                              _selectedTag = tag;
-                            });
-                            _filterContacts();
+                Expanded(
+                  child: _filteredContacts.isEmpty
+                      ? const Center(child: Text("Contact not Found!"))
+                      : ListView.builder(
+                          itemCount: _filteredContacts.length,
+                          itemBuilder: (context, index) {
+                            final contact = _filteredContacts[index];
+
+                            return ContactCard(contact: contact);
                           },
                         ),
-                      );
-                    },
-                  ),
                 ),
               ],
             ),
-          ),
-          Expanded(
-            child: _filteredContacts.isEmpty ? const Center(child: Text("Contact not Found!")) : ListView.builder(
-              itemCount: _filteredContacts.length,
-              itemBuilder: (context, index) {
-                final contact = _filteredContacts[index];
-                return ContactCard(
-                  contact: contact,
-                  onReport: (reason) => _handleReport(contact, reason),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
