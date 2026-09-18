@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
 import 'chat_list_screen.dart';
+import 'menu_screen.dart';
 
 class NavScreen extends StatefulWidget {
   const NavScreen({super.key});
@@ -15,6 +16,7 @@ class _NavScreenState extends State<NavScreen> {
   final List<Widget> _pages = [
     const HomeScreen(),
     const ChatListScreen(),
+    const MenuScreen(), 
   ];
 
   void _onItemTapped(int index) {
@@ -40,6 +42,10 @@ class _NavScreenState extends State<NavScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.chat),
             label: 'Chats',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.menu), 
+            label: 'Menu',
           ),
         ],
       ),
