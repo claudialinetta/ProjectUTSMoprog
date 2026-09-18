@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:projectmoprog/screens/splash_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 import 'theme/app_theme.dart';
-import 'screens/nav_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,7 +27,7 @@ class MyApp extends StatelessWidget {
       title: 'GetContact Clone',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const NavScreen(),
+      home: const SplashScreen(),
     );
   }
 }

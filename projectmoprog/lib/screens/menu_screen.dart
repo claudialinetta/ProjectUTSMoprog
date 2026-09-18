@@ -1,7 +1,21 @@
 import 'package:flutter/material.dart';
 
+import '../services/auth_service.dart';
+import 'login_screen.dart';
+
 class MenuScreen extends StatelessWidget {
   const MenuScreen({super.key});
+
+  Future<void> _logout(BuildContext context) async {
+    await AuthService().logout();
+
+    if (!context.mounted) return;
+
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -12,66 +26,87 @@ class MenuScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Card(
-            color: Colors.white,
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: () {
-                print('Tombol Add Birthday ditekan');
-              },
+      body: Column(
+        children: [
+          Expanded(
+            child: Center(
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 16.0),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10.0), 
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300], 
-                        borderRadius: BorderRadius.circular(10.0), 
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Card(
+                  color: Colors.white,
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () {
+                      print('Tombol Add Birthday ditekan');
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 20.0,
+                        horizontal: 16.0,
                       ),
-                      child: const Icon(
-                        Icons.cleaning_services,
-                        size: 32,
-                        color: Colors.blue,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    const Expanded(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Row(
                         children: [
-                          Text(
-                            'Add your birthday!',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                          Container(
+                            padding: const EdgeInsets.all(10.0),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[300],
+                              borderRadius: BorderRadius.circular(10.0),
+                            ),
+                            child: const Icon(
+                              Icons.cleaning_services,
+                              size: 32,
+                              color: Colors.blue,
                             ),
                           ),
-                          SizedBox(height: 6),
-                          Text(
-                            'add your birthday for celebrate congratulations and gifts.',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey,
+                          const SizedBox(width: 16),
+                          const Expanded(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Add your birthday!',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                SizedBox(height: 6),
+                                Text(
+                                  'add your birthday for celebrate congratulations and gifts.',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
+
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16.0, 0, 16.0, 16.0),
+            child: SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _logout(context),
+                icon: const Icon(Icons.logout),
+                label: const Text('Logout'),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
