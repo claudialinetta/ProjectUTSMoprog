@@ -1,52 +1,15 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/contact_model.dart';
 
 class ContactService {
-  static final List<ContactModel> _contacts = [
-      ContactModel(
-        id: "1",
-        name: "Bagas Dribble",
-        phoneNumber: "+62 812-3456-7890",
-        tag: "Trusted",
-        reportCount: 0,
-        avatarInitial: "BS",
-      ),
-      ContactModel(
-        id: "2",
-        name: "Unknown Caller",
-        phoneNumber: "+62 812-1111-1111",
-        tag: "Spam Likely",
-        reportCount: 143,
-        avatarInitial: "?",
-      ),
-      ContactModel(
-        id: "3",
-        name: "Fufufafa",
-        phoneNumber: "+62 821-2121-2121",
-        tag: "Unknown",
-        reportCount: 19,
-        avatarInitial: "F",
-      ),
-      ContactModel(
-        id: "4",
-        name: "Delivery Courier",
-        phoneNumber: "+62 899-2222-3333",
-        tag: "Trusted",
-        reportCount: 4,
-        avatarInitial: "DC",
-      ),
-  ];
-  
-  Future<List<ContactModel>> getContacts() async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    return _contacts;
-  }
+  final _supabase = Supabase.instance.client;
 
-  Future<void> reportContact(String contactId, String reason) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    final index = _contacts.indexWhere((c) => c.id == contactId);
-    if (index != -1) {
-      _contacts[index].reportCount += 1;
-      _contacts[index].refreshHeadlineTag();
+  Future<List<ContactModel>> getContacts() async {
+    try {
+      final response = await _supabase.from('contacts').select();
+      return response.map((dynamic item) => ContactModel.fromJson(item)).toList();
+    } catch (e) {
+      throw Exception('Failed to load contacts from Supabase: $e');
     }
   }
 }

@@ -38,7 +38,7 @@ class ContactModel {
   };
 
   factory ContactModel.fromJson(Map<String, dynamic> json) => ContactModel(
-    id: json['id'] as String,
+    id: json['id'].toString(),
     name: json['name'] as String,
     phoneNumber: json['phoneNumber'] as String,
     tag: json['tag'] as String,
