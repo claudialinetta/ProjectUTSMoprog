@@ -8,6 +8,7 @@ class ContactModel {
   int reportCount;
   final String avatarInitial;
   final List<ContactTag> tags;
+  final String? ownerId;
 
   ContactModel({
     required this.id,
@@ -17,6 +18,7 @@ class ContactModel {
     required this.reportCount,
     required this.avatarInitial,
     List<ContactTag>? tags,
+    this.ownerId,
   }) : tags = tags ?? [];
 
   void refreshHeadlineTag() {
@@ -35,6 +37,7 @@ class ContactModel {
     'reportCount': reportCount,
     'avatarInitial': avatarInitial,
     'tags': tags.map((t) => t.toJson()).toList(),
+    'ownerId': ownerId,
   };
 
   factory ContactModel.fromJson(Map<String, dynamic> json) => ContactModel(
@@ -47,5 +50,6 @@ class ContactModel {
     tags: (json['tags'] as List<dynamic>? ?? [])
         .map((t) => ContactTag.fromJson(t as Map<String, dynamic>))
         .toList(),
+    ownerId: json['ownerId'],
   );
 }

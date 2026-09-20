@@ -5,7 +5,9 @@ import '../services/contact_service.dart';
 import '../widgets/contact_card.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final String currentUserId;
+
+  const HomeScreen({super.key, required this.currentUserId});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -27,7 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _fetchData() async {
     try {
-      final contacts = await _service.getContacts();
+      final contacts = await _service.getContacts(widget.currentUserId);
 
       setState(() {
         _allContacts = contacts;

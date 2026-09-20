@@ -4,7 +4,9 @@ import 'chat_list_screen.dart';
 import 'menu_screen.dart';
 
 class NavScreen extends StatefulWidget {
-  const NavScreen({super.key});
+  final String currentUserId;
+
+  const NavScreen({super.key, required this.currentUserId});
 
   @override
   State<NavScreen> createState() => _NavScreenState();
@@ -13,9 +15,9 @@ class NavScreen extends StatefulWidget {
 class _NavScreenState extends State<NavScreen> {
   int _selectedIndex = 0;
 
-  final List<Widget> _pages = [
-    const HomeScreen(),
-    const ChatListScreen(),
+  late final List<Widget> _pages = [
+    HomeScreen(currentUserId: widget.currentUserId),
+    ChatListScreen(currentUserId: widget.currentUserId),
     const MenuScreen(), 
   ];
 

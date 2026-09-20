@@ -4,7 +4,9 @@ import '../models/contact_model.dart';
 import 'chat_screen.dart';
 
 class ChatListScreen extends StatefulWidget {
-  const ChatListScreen({super.key});
+  final String currentUserId;
+
+  const ChatListScreen({super.key, required this.currentUserId});
 
   @override
   State<ChatListScreen> createState() => _ChatListScreenState();
@@ -22,7 +24,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 
   Future<void> _fetchChatHistory() async {
-    final contacts = await _service.getContacts();
+    final contacts = await _service.getContacts(widget.currentUserId);
     setState(() {
       _chatHistory = contacts;
       _isLoading = false;

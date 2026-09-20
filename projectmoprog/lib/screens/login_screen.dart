@@ -56,7 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       Navigator.of(
         context,
-      ).pushReplacement(MaterialPageRoute(builder: (_) => const NavScreen()));
+      ).pushReplacement(MaterialPageRoute(builder: (_) => NavScreen(currentUserId: _phoneController.text,)));
     } on AuthException catch (e) {
       setState(() => _errorMessage = e.message);
     } finally {
