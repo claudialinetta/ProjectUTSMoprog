@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:projectmoprog/screens/splash_screen.dart';
+import 'package:projectmoprog/screens/auth_screens/splash_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
