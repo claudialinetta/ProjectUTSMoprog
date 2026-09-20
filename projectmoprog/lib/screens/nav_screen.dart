@@ -22,7 +22,7 @@ class _NavScreenState extends State<NavScreen> {
       currentUserPhoneNumber: widget.currentUserPhoneNumber,
     ),
     ChatListScreen(currentUserId: widget.currentUserId),
-    const MenuScreen(), 
+    MenuScreen(currentUserId: widget.currentUserId), 
   ];
 
   void _onItemTapped(int index) {

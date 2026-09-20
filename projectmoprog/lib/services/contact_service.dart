@@ -13,6 +13,17 @@ class ContactService {
     }
   }
 
+  Future<void> reportContact(String contactId, int currentCount) async {
+    try {
+      await _supabase
+          .from('contacts')
+          .update({'reportCount': currentCount + 1})
+          .eq('id', contactId);
+    } catch (e) {
+      throw Exception('Failed to update report count: $e');
+    }
+  }
+
   Future<List<String>> getMySavedNames(String myPhoneNumber) async {
     final response = await Supabase.instance.client
       .from('savedContacts')

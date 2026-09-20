@@ -16,6 +16,7 @@ class ContactScreen extends StatefulWidget {
 class _ContactScreenState extends State<ContactScreen> {
   final ContactService _service = ContactService();
   final TextEditingController _searchController = TextEditingController();
+  final Set<String> _reportedContacts = {};
 
   List<ContactModel> _allContacts = [];
   List<ContactModel> _filteredContacts = [];
@@ -68,6 +69,45 @@ class _ContactScreenState extends State<ContactScreen> {
     });
   }
 
+  Future<void> _handleReport(ContactModel contact, String reason) async {
+    if (_reportedContacts.contains(contact.id)) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("You've already reported this contact."),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return; 
+    }
+
+    try {
+      await _service.reportContact(contact.id, contact.reportCount);
+
+      setState(() {
+        _reportedContacts.add(contact.id); 
+        contact.reportCount += 1; 
+      });
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("${contact.phoneNumber} was reported as '$reason'"),
+          backgroundColor: Colors.redAccent,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Failed to report the contact. Please check your internet connection."),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -109,7 +149,10 @@ class _ContactScreenState extends State<ContactScreen> {
                           itemBuilder: (context, index) {
                             final contact = _filteredContacts[index];
 
-                            return ContactCard(contact: contact);
+                            return ContactCard(
+                              contact: contact,
+                              onReport: (reason) => _handleReport(contact, reason),
+                            );
                           },
                         ),
                 ),
