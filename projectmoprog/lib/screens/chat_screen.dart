@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import '../models/contact_model.dart';
 import '../models/chat_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ChatScreen extends StatefulWidget {
   final ContactModel contact;
+  final String currentUserId;
 
-  const ChatScreen({super.key, required this.contact});
+  const ChatScreen({
+    super.key,
+    required this.contact,
+    required this.currentUserId
+  });
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -14,13 +20,19 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final _supabase = Supabase.instance.client;
 
-  final List<ChatMessageModel> _messages = [];
-  ChatMessageModel? _editingMessage; 
+  ChatMessageModel? _editingMessage;
+
+  late final Stream<List<Map<String, dynamic>>> _chatStream;
 
   @override
   void initState() {
     super.initState();
+    _chatStream = _supabase
+        .from('messages')
+        .stream(primaryKey: ['id'])
+        .order('createdAt', ascending: true);
   }
 
   @override
@@ -30,37 +42,39 @@ class _ChatScreenState extends State<ChatScreen> {
     super.dispose();
   }
 
-  void _sendOrUpdateMessage() {
+  Future<void> _sendOrUpdateMessage() async{
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
 
+    final isEditing = _editingMessage != null;
+    final editId = _editingMessage?.id;
+    
     setState(() {
-      if (_editingMessage != null) {
-        _editingMessage!.text = text;
-        _editingMessage!.isEdited = true;
-        _editingMessage = null;
-      } else {
-        _messages.add(
-          ChatMessageModel(
-            id: DateTime.now().millisecondsSinceEpoch.toString(),
-            text: text,
-            timestamp: DateTime.now(),
-            isMe: true,
-          ),
-        );
-      }
+      _editingMessage = null;
       _messageController.clear();
     });
 
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
+    try {
+      if (isEditing) {
+        await _supabase.from('messages').update({
+          'content': text,
+          'isEdited': true,
+        }).eq('id', editId!);
+      } else {
+        await _supabase.from('messages').insert({
+          'senderId': widget.currentUserId,
+          'receiverId': widget.contact.phoneNumber,
+          'content': text,
+        });
       }
-    });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to send message: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   void _startEditing(ChatMessageModel message) {
@@ -77,13 +91,16 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
-  void _deleteMessage(String id) {
-    setState(() {
-      _messages.removeWhere((msg) => msg.id == id);
-      if (_editingMessage?.id == id) {
-        _cancelEditing();
-      }
-    });
+  Future<void> _deleteMessage(String id) async{
+    if (_editingMessage?.id == id) {
+      _cancelEditing();
+    }
+    
+    try {
+      await _supabase.from('messages').delete().eq('id', id);
+    } catch (e) {
+      debugPrint('Failed to delete message: $e');
+    }
   }
 
   void _showMessageOptions(ChatMessageModel message) {
@@ -97,23 +114,33 @@ class _ChatScreenState extends State<ChatScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (message.isMe)
+              if (message.isMe) ...[
                 ListTile(
                   leading: const Icon(Icons.edit, color: Colors.blue),
-                  title: const Text('Edit Pesan'),
+                  title: const Text('Edit Message'),
                   onTap: () {
                     Navigator.pop(context);
                     _startEditing(message);
                   },
                 ),
-              ListTile(
-                leading: const Icon(Icons.delete, color: Colors.red),
-                title: const Text('Hapus Pesan', style: TextStyle(color: Colors.red)),
-                onTap: () {
-                  Navigator.pop(context);
-                  _deleteMessage(message.id);
-                },
-              ),
+                ListTile(
+                  leading: const Icon(Icons.delete_forever, color: Colors.red),
+                  title: const Text('Delete Message', style: TextStyle(color: Colors.red)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _deleteMessage(message.id);
+                  },
+                ),
+              ] else ...[
+                const Padding(
+                  padding: EdgeInsets.all(24.0),
+                  child: Text(
+                    'You can only edit or delete your own messages.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
+              ]
             ],
           ),
         );
@@ -164,67 +191,107 @@ class _ChatScreenState extends State<ChatScreen> {
       body: Column(
         children: [
           Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final message = _messages[index];
-                return GestureDetector(
-                  onLongPress: () => _showMessageOptions(message),
-                  child: Align(
-                    alignment: message.isMe ? Alignment.centerRight : Alignment.centerLeft,
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(vertical: 4),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      constraints: BoxConstraints(
-                        maxWidth: MediaQuery.of(context).size.width * 0.75,
-                      ),
-                      decoration: BoxDecoration(
-                        color: message.isMe ? Colors.blue.shade600 : Colors.grey.shade200,
-                        borderRadius: BorderRadius.only(
-                          topLeft: const Radius.circular(16),
-                          topRight: const Radius.circular(16),
-                          bottomLeft: Radius.circular(message.isMe ? 16 : 2),
-                          bottomRight: Radius.circular(message.isMe ? 2 : 16),
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            message.text,
-                            style: TextStyle(
-                              color: message.isMe ? Colors.white : Colors.black87,
-                              fontSize: 15,
+            child: StreamBuilder<List<Map<String, dynamic>>>(
+              stream: _chatStream,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(child: Text('No messages yet.'));
+                }
+
+                final rawMessages = snapshot.data!.where((msg) {
+                  final dbSender = msg['senderId'].toString();
+                  final dbReceiver = msg['receiverId'].toString();
+                  final myId = widget.currentUserId.toString();
+                  final contactId = widget.contact.phoneNumber.toString();
+
+                  final isMeSender = dbSender == myId && dbReceiver == contactId;
+                  final isMeReceiver = dbSender == contactId && dbReceiver == myId;
+                  return isMeSender || isMeReceiver;
+                }).toList();
+
+                final messages = rawMessages.map((msg) {
+                  final model = ChatMessageModel(
+                    id: msg['id'].toString(),
+                    text: msg['content'] ?? '',
+                    timestamp: msg['createdAt'] != null ? DateTime.parse(msg['createdAt']) : DateTime.now(),
+                    isMe: msg['senderId'].toString() == widget.currentUserId.toString(),
+                  );
+                  model.isEdited = msg['isEdited'] == true;
+                  return model;
+                }).toList();
+
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (_scrollController.hasClients) {
+                    _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+                  }
+                });
+                return ListView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  itemCount: messages.length,
+                  itemBuilder: (context, index) {
+                    final message = messages[index];
+                    return GestureDetector(
+                      onLongPress: () => _showMessageOptions(message),
+                      child: Align(
+                        alignment: message.isMe ? Alignment.centerRight : Alignment.centerLeft,
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(vertical: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          constraints: BoxConstraints(
+                            maxWidth: MediaQuery.of(context).size.width * 0.75,
+                          ),
+                          decoration: BoxDecoration(
+                            color: message.isMe ? Colors.blue.shade600 : Colors.grey.shade200,
+                            borderRadius: BorderRadius.only(
+                              topLeft: const Radius.circular(16),
+                              topRight: const Radius.circular(16),
+                              bottomLeft: Radius.circular(message.isMe ? 16 : 2),
+                              bottomRight: Radius.circular(message.isMe ? 2 : 16),
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              if (message.isEdited)
-                                Text(
-                                  'Edited • ',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: message.isMe ? Colors.white70 : Colors.grey.shade600,
-                                    fontStyle: FontStyle.italic,
-                                  ),
-                                ),
                               Text(
-                                _formatTime(message.timestamp),
+                                message.text,
                                 style: TextStyle(
-                                  fontSize: 10,
-                                  color: message.isMe ? Colors.white70 : Colors.grey.shade600,
+                                  color: message.isMe ? Colors.white : Colors.black87,
+                                  fontSize: 15,
                                 ),
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (message.isEdited)
+                                    Text(
+                                      'Edited • ',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: message.isMe ? Colors.white70 : Colors.grey.shade600,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                  Text(
+                                    _formatTime(message.timestamp.toLocal()),
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: message.isMe ? Colors.white70 : Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 );
               },
             ),
@@ -271,7 +338,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     controller: _messageController,
                     textCapitalization: TextCapitalization.sentences,
                     decoration: InputDecoration(
-                      hintText: _editingMessage != null ? 'Edit pesan...' : 'Ketik pesan...',
+                      hintText: _editingMessage != null ? 'Edit message...' : 'Type a message...',
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       filled: true,
                       fillColor: Colors.grey.shade100,
