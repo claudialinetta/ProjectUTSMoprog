@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../services/auth_service.dart';
-import 'nav_screen.dart';
+import '../../services/auth_service.dart';
+import '../nav_screen.dart';
 import 'login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -26,7 +26,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (_) => user != null ? NavScreen(currentUserId: user.id,) : const LoginScreen(),
+        builder: (_) => user != null ? NavScreen(currentUserId: user.id, currentUserPhoneNumber: user.phoneNumber,) : const LoginScreen(),
       ),
     );
   }

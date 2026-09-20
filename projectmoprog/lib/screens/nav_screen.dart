@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
-import 'chat_list_screen.dart';
+import 'chat_screens/chat_list_screen.dart';
 import 'menu_screen.dart';
 
 class NavScreen extends StatefulWidget {
   final String currentUserId;
+  final String currentUserPhoneNumber;
 
-  const NavScreen({super.key, required this.currentUserId});
+  const NavScreen({super.key, required this.currentUserId, required this.currentUserPhoneNumber});
 
   @override
   State<NavScreen> createState() => _NavScreenState();
@@ -15,8 +16,11 @@ class NavScreen extends StatefulWidget {
 class _NavScreenState extends State<NavScreen> {
   int _selectedIndex = 0;
 
-  late final List<Widget> _pages = [
-    HomeScreen(currentUserId: widget.currentUserId),
+  List<Widget> get _pages => [
+    HomeScreen(
+      currentUserId: widget.currentUserId,
+      currentUserPhoneNumber: widget.currentUserPhoneNumber,
+    ),
     ChatListScreen(currentUserId: widget.currentUserId),
     const MenuScreen(), 
   ];
@@ -39,7 +43,7 @@ class _NavScreenState extends State<NavScreen> {
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.contacts),
-            label: 'Kontak',
+            label: 'Home',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.chat),

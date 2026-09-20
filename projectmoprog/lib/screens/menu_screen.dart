@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/auth_service.dart';
-import 'login_screen.dart';
+import 'auth_screens/login_screen.dart';
 
 class MenuScreen extends StatelessWidget {
   const MenuScreen({super.key});

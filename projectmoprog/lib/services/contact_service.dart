@@ -12,4 +12,14 @@ class ContactService {
       throw Exception('Failed to load contacts from Supabase: $e');
     }
   }
+
+  Future<List<String>> getMySavedNames(String myPhoneNumber) async {
+    final response = await Supabase.instance.client
+      .from('savedContacts')
+      .select('savedName')
+      .eq('savedPhoneNumber', myPhoneNumber);
+    final List<String> savedNames = response.map((data) => data['savedName'] as String).toList();
+    return savedNames.toSet().toList(); 
+  }
 }
+
