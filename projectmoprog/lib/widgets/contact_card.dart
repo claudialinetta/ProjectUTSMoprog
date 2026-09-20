@@ -15,11 +15,11 @@ class ContactCard extends StatelessWidget {
 
   void _showReportDialog(BuildContext context) {
     final List<String> reasons = [
-      'Penipuan / Scam',
-      'Spam Telepon / Robot',
-      'Telemarketing Mengganggu',
-      'Ancaman / Pelecehan',
-      'Nomor Palsu',
+      'Fraud / Scam',
+      'Spam Calls / Robocalls',
+      'Annoying Telemarketing',
+      'Threats / Harassment',
+      'Fake Number',
     ];
 
     showModalBottomSheet(
@@ -35,12 +35,12 @@ class ContactCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Laporkan ${contact.name}",
+                "Report ${contact.name}",
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               const Text(
-                "Pilih alasan laporan untuk melindungi pengguna lain:",
+                "Select a reason for reporting to help protect other users:",
                 style: TextStyle(color: Colors.grey),
               ),
               const Divider(height: 24),
