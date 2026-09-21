@@ -2,25 +2,23 @@ import 'package:flutter/material.dart';
 
 import 'menu_features_screens/contact_screen.dart';
 import 'menu_features_screens/my_tags_screen.dart';
+import 'menu_features_screens/call_history_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final String currentUserId;
   final String currentUserPhoneNumber;
 
   const HomeScreen({
-    super.key, 
-    required this.currentUserId, 
-    required this.currentUserPhoneNumber
+    super.key,
+    required this.currentUserId,
+    required this.currentUserPhoneNumber,
   });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
-      appBar: AppBar(
-        title: const Text("GetContact Clone"),
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text("GetContact Clone"), elevation: 0),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -61,9 +59,26 @@ class HomeScreen extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => ContactScreen(
-                      currentUserId: currentUserId,
-                    ),
+                    builder: (context) =>
+                        ContactScreen(currentUserId: currentUserId),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+
+            _buildMenuCard(
+              context: context,
+              title: "Call History",
+              subtitle: "View your recent contact history",
+              icon: Icons.history,
+              color: Colors.orange.shade700,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        CallHistoryScreen(ownerId: currentUserId),
                   ),
                 );
               },
@@ -117,7 +132,9 @@ class HomeScreen extends StatelessWidget {
                   Text(
                     title,
                     style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -134,4 +151,3 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
-
