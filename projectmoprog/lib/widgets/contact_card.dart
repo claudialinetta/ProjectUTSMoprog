@@ -5,12 +5,14 @@ import 'tag_badge.dart';
 
 class ContactCard extends StatelessWidget {
   final ContactModel contact;
+  final VoidCallback? onTap;
   final Function(String reason)? onReport;
 
   const ContactCard({
     super.key,
     required this.contact,
     this.onReport,
+    this.onTap,
   });
 
   void _showReportDialog(BuildContext context) {
@@ -36,7 +38,10 @@ class ContactCard extends StatelessWidget {
             children: [
               Text(
                 "Report ${contact.name}",
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 8),
               const Text(
@@ -46,7 +51,10 @@ class ContactCard extends StatelessWidget {
               const Divider(height: 24),
               ...reasons.map(
                 (reason) => ListTile(
-                  leading: const Icon(Icons.report_problem_outlined, color: Colors.redAccent),
+                  leading: const Icon(
+                    Icons.report_problem_outlined,
+                    color: Colors.redAccent,
+                  ),
                   title: Text(reason),
                   onTap: () {
                     Navigator.pop(ctx);
@@ -65,13 +73,15 @@ class ContactCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isSpam = contact.reportCount >= 10 || contact.tag == 'Spam Likely';
+    final bool isSpam =
+        contact.reportCount >= 10 || contact.tag == 'Spam Likely';
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: ListTile(
+        onTap: onTap,
         contentPadding: const EdgeInsets.all(12),
         leading: CircleAvatar(
           radius: 24,
@@ -122,7 +132,11 @@ class ContactCard extends StatelessWidget {
           children: [
             TagBadge(tag: contact.tag),
             IconButton(
-              icon: const Icon(Icons.flag_outlined, size: 20, color: Colors.grey),
+              icon: const Icon(
+                Icons.flag_outlined,
+                size: 20,
+                color: Colors.grey,
+              ),
               tooltip: 'Laporkan Kontak',
               onPressed: () => _showReportDialog(context),
             ),
