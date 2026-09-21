@@ -1,10 +1,55 @@
 import 'package:flutter/material.dart';
 
 import '../services/auth_service.dart';
-import 'login_screen.dart';
+import '../models/user_model.dart';
+import 'menu_tab_screen/account_settings_screen.dart';
+import 'auth_screens/login_screen.dart';
 
-class MenuScreen extends StatelessWidget {
-  const MenuScreen({super.key});
+class MenuScreen extends StatefulWidget {
+  final String currentUserId;
+
+  const MenuScreen({super.key, required this.currentUserId});
+
+  @override
+  State<MenuScreen> createState() => _MenuScreenState();
+}
+
+class _MenuScreenState extends State<MenuScreen> {  
+  String _userName = "Loading...";
+  String _userInitial = "-";
+  String? _dateOfBirth;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserProfile();
+  }
+
+  Future<void> _fetchUserProfile() async {
+    try {
+      final UserModel? user = await AuthService().getCurrentUser();
+      
+      if (mounted) {
+        setState(() {
+          if (user != null) {
+            _userName = user.name;
+            _userInitial = user.name.isNotEmpty ? user.name[0].toUpperCase() : "?";
+            _dateOfBirth = user.dateOfBirth;
+          } else {
+            _userName = "GetContact User";
+            _userInitial = "G";
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _userName = "Failed to load.";
+          _userInitial = "?";
+        });
+      }
+    }
+  }
 
   Future<void> _logout(BuildContext context) async {
     await AuthService().logout();
@@ -28,6 +73,40 @@ class MenuScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 32),
+            alignment: Alignment.center,
+            child: Column(
+              children: [
+                CircleAvatar(
+                  radius: 40,
+                  backgroundColor: Colors.blue.shade100,
+                  child: Text(
+                    _userInitial,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  _userName,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  widget.currentUserId,
+                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                ),
+              ],
+            ),
+          ),
+
           Expanded(
             child: Center(
               child: Padding(
@@ -40,8 +119,21 @@ class MenuScreen extends StatelessWidget {
                   ),
                   child: InkWell(
                     borderRadius: BorderRadius.circular(12),
-                    onTap: () {
-                      print('Tombol Add Birthday ditekan');
+                    onTap: () async {
+                      final bool? isUpdated = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AccountSettingsScreen(
+                            initialName: _userName,
+                            phoneNumber: widget.currentUserId,
+                            initialDateOfBirth: _dateOfBirth,
+                          ),
+                        ),
+                      );
+
+                      if (isUpdated == true) {
+                        _fetchUserProfile();
+                      }
                     },
                     child: Padding(
                       padding: const EdgeInsets.symmetric(

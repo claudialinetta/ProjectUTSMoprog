@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../services/contact_service.dart';
-import '../models/contact_model.dart';
+import '../../../services/contact_service.dart';
+import '../../models/contact_model.dart';
 import 'chat_screen.dart';
 
 class ChatListScreen extends StatefulWidget {

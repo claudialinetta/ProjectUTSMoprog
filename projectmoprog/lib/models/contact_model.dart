@@ -42,14 +42,14 @@ class ContactModel {
 
   factory ContactModel.fromJson(Map<String, dynamic> json) => ContactModel(
     id: json['id'].toString(),
-    name: json['name'] as String,
-    phoneNumber: json['phoneNumber'] as String,
-    tag: json['tag'] as String,
-    reportCount: json['reportCount'] as int,
-    avatarInitial: json['avatarInitial'] as String,
+    name: json['name'] as String? ?? 'John Doe',
+    phoneNumber: json['phoneNumber'] as String? ?? 'XXX',
+    tag: json['tag'] as String? ?? '-',
+    reportCount: json['reportCount'] as int? ?? 0,
+    avatarInitial: json['avatarInitial'] as String? ?? '?',
     tags: (json['tags'] as List<dynamic>? ?? [])
         .map((t) => ContactTag.fromJson(t as Map<String, dynamic>))
         .toList(),
-    ownerId: json['ownerId'],
+    ownerId: json['ownerId']?.toString(),
   );
 }

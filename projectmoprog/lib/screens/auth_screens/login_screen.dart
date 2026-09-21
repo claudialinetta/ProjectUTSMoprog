@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../services/auth_service.dart';
-import 'nav_screen.dart';
+import '../../services/auth_service.dart';
+import '../nav_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -56,7 +56,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
       Navigator.of(
         context,
-      ).pushReplacement(MaterialPageRoute(builder: (_) => NavScreen(currentUserId: _phoneController.text,)));
+      ).pushReplacement(MaterialPageRoute(
+        builder: (_) => NavScreen(
+          currentUserId: _phoneController.text,
+          currentUserPhoneNumber: _phoneController.text,
+        )));
     } on AuthException catch (e) {
       setState(() => _errorMessage = e.message);
     } finally {

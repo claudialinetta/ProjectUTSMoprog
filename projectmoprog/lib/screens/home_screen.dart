@@ -1,120 +1,137 @@
 import 'package:flutter/material.dart';
 
-import '../models/contact_model.dart';
-import '../services/contact_service.dart';
-import '../widgets/contact_card.dart';
+import 'menu_features_screens/contact_screen.dart';
+import 'menu_features_screens/my_tags_screen.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends StatelessWidget {
   final String currentUserId;
+  final String currentUserPhoneNumber;
 
-  const HomeScreen({super.key, required this.currentUserId});
-
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  final ContactService _service = ContactService();
-  final TextEditingController _searchController = TextEditingController();
-
-  List<ContactModel> _allContacts = [];
-  List<ContactModel> _filteredContacts = [];
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchData();
-  }
-
-  Future<void> _fetchData() async {
-    try {
-      final contacts = await _service.getContacts(widget.currentUserId);
-
-      setState(() {
-        _allContacts = contacts;
-        _filteredContacts = contacts;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Failed to load data: $e')));
-      }
-    }
-  }
-
-  void _filterContacts() {
-    final query = _searchController.text.toLowerCase();
-    final cleanQuery = query.replaceAll(RegExp(r'[\s\-]'), '');
-
-    setState(() {
-      _filteredContacts = _allContacts.where((contact) {
-        final nameMatch = contact.name.toLowerCase().contains(query);
-
-        final cleanPhone = contact.phoneNumber.replaceAll(
-          RegExp(r'[\s\-]'),
-          '',
-        );
-
-        final phoneMatch = cleanPhone.contains(cleanQuery);
-
-        return nameMatch || phoneMatch;
-      }).toList();
-    });
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
+  const HomeScreen({
+    super.key, 
+    required this.currentUserId, 
+    required this.currentUserPhoneNumber
+  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("GetContact Clone")),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                Container(
-                  color: Colors.white,
-                  padding: const EdgeInsets.all(12.0),
-                  child: TextField(
-                    controller: _searchController,
-                    onChanged: (value) => _filterContacts(),
-                    decoration: InputDecoration(
-                      hintText: 'Search by name or phone number...',
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30),
-                        borderSide: BorderSide.none,
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey.shade200,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 0),
+      backgroundColor: Colors.grey.shade100,
+      appBar: AppBar(
+        title: const Text("GetContact Clone"),
+        elevation: 0,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Home",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+
+            _buildMenuCard(
+              context: context,
+              title: "Check My Tags",
+              subtitle: "Check what other people saved your name",
+              icon: Icons.tag,
+              color: Colors.blue.shade700,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => MyTagsScreen(
+                      currentUserPhoneNumber: currentUserPhoneNumber,
                     ),
                   ),
-                ),
-                Expanded(
-                  child: _filteredContacts.isEmpty
-                      ? const Center(child: Text("Contact not Found!"))
-                      : ListView.builder(
-                          itemCount: _filteredContacts.length,
-                          itemBuilder: (context, index) {
-                            final contact = _filteredContacts[index];
-
-                            return ContactCard(contact: contact);
-                          },
-                        ),
-                ),
-              ],
+                );
+              },
             ),
+            const SizedBox(height: 16),
+
+            _buildMenuCard(
+              context: context,
+              title: "Contacts",
+              subtitle: "All your contacts inside one place",
+              icon: Icons.search,
+              color: Colors.teal.shade600,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ContactScreen(
+                      currentUserId: currentUserId,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMenuCard({
+    required BuildContext context,
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: 1,
+              blurRadius: 5,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 32),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+          ],
+        ),
+      ),
     );
   }
 }
+
