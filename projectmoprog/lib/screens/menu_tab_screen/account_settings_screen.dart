@@ -154,7 +154,6 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
         child: Column(
           children: [
             const SizedBox(height: 24),
-            // Profile Photo Section
             CircleAvatar(
               radius: 50,
               backgroundColor: Colors.grey.shade300,
