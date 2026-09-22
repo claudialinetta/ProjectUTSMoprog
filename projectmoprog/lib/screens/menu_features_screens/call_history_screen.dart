@@ -136,11 +136,89 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
     }
   }
 
+  Future<void> _markAsSpam(CallHistoryModel item) async {
+    try {
+      _showMessage('Marked as spam.');
+      _load(showSpinner: false); 
+    } catch (e) {
+      _showMessage('Failed to change status.');
+    }
+  }
+
+  Future<void> _markAsUnknown(CallHistoryModel item) async {
+    try {
+      _showMessage('Delete mark');
+      _load(showSpinner: false);
+    } catch (e) {
+      _showMessage('Failed to change status.');
+    }
+  }
+
   void _showMessage(String text, {SnackBarAction? action}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(text), action: action));
+  }
+
+  void _showOptions(CallHistoryModel item) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Text(
+                  'Calling Option',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+              const Divider(),
+              if (item.isUnknownCaller)
+                if (item.status == CallStatus.spam)
+                    ListTile(
+                      leading: const Icon(Icons.restore, color: Colors.blue),
+                      title: const Text(
+                        'Unmarked contact',
+                        style: TextStyle(color: Colors.blue, fontWeight: FontWeight.w500),
+                      ),
+                      onTap: () {
+                        Navigator.pop(context);
+                        _markAsUnknown(item);
+                      },
+                    )
+                else
+                  ListTile(
+                    leading: const Icon(Icons.block, color: Colors.red),
+                    title: const Text(
+                      'Marked as spam',
+                      style: TextStyle(color: Colors.red, fontWeight: FontWeight.w500),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context); 
+                      _markAsSpam(item); 
+                    },
+                  )
+              else
+                const Padding(
+                  padding: EdgeInsets.all(24.0),
+                  child: Text(
+                    'This contact is already been saved by you.',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -254,7 +332,10 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
             direction: DismissDirection.endToStart,
             background: _buildSwipeBackground(),
             onDismissed: (_) => _deleteItem(item),
-            child: CallHistoryTile(item: item),
+            child: GestureDetector(
+              onLongPress: () => _showOptions(item),
+              child: CallHistoryTile(item: item),
+            ),
           );
         },
       ),

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../models/contact_model.dart';
 import '../../services/contact_service.dart';
 import '../../widgets/contact_card.dart';
+import 'contact_detail_screen.dart';
 
 class ContactScreen extends StatefulWidget {
   final String currentUserId;
@@ -359,9 +360,22 @@ class _ContactScreenState extends State<ContactScreen> {
                                     ),
                                   ),
                                 ],
-                                ContactCard(
-                                  contact: contact,
-                                  onReport: (reason) => _handleReport(contact, reason),
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => ContactDetailScreen(
+                                          contact: contact,
+                                          currentUserId: widget.currentUserId,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: ContactCard(
+                                    contact: contact,
+                                    onReport: (reason) => _handleReport(contact, reason),
+                                  ),
                                 ),
                               ],
                             );

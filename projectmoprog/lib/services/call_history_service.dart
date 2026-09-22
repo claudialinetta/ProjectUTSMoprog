@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/call_history_model.dart';
+import '../models/contact_tag.dart';
 
 class CallHistoryService {
   static const String _table = 'call_history';
@@ -37,16 +38,51 @@ class CallHistoryService {
     CallStatus status = CallStatus.unknown,
     CallType type = CallType.searched,
     DateTime? happenedAt,
+    List<ContactTag> initialTags = const [],
   }) async {
     try {
+      final phoneKey = toPhoneKey(phoneNumber);
+
+      final countResponse = await _db
+        .from(_table)
+        .select('id')
+        .eq('owner_id', ownerId)
+        .eq('phone_key', phoneKey)
+        .count(CountOption.exact);
+
+      final int previousCallCount = countResponse.count;
+      
+      CallStatus finalStatus = status;
+      List<ContactTag> finalTags = List.from(initialTags);
+
+      bool isUnknown = name == 'Unknown Caller' || name == phoneNumber;
+
+      if (isUnknown && previousCallCount >= 4) {
+        finalStatus = CallStatus.spam;
+
+        final hasSpamTag = finalTags.any((t) => t.label.toLowerCase().contains('spam'));
+        if (!hasSpamTag) {
+          finalTags.add(
+            ContactTag(
+              label: 'Spam',
+              addedByName: 'Sistem Otomatis',
+            ),
+          );
+        }
+      } else {
+        final hasSpamTag = finalTags.any((t) => t.label.toLowerCase().contains('spam'));
+        if (hasSpamTag) finalStatus = CallStatus.spam;
+      }
+
       await _db.from(_table).upsert({
         'owner_id': ownerId,
         'name': name,
         'phone_number': phoneNumber,
         'phone_key': toPhoneKey(phoneNumber),
-        'status': status.name,
+        'status': finalStatus.name,
         'call_type': type.name,
         'happened_at': (happenedAt ?? DateTime.now()).toUtc().toIso8601String(),
+        'tags': finalTags.map((t) => t.toJson()).toList(),
       }, onConflict: 'owner_id,phone_key');
     } catch (e) {
       debugPrint('Gagal mencatat riwayat: $e');
