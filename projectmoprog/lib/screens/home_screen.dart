@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'menu_features_screens/contact_screen.dart';
 import 'menu_features_screens/my_tags_screen.dart';
 import 'menu_features_screens/call_history_screen.dart';
+import 'menu_features_screens/help_center_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final String currentUserId;
@@ -79,6 +80,23 @@ class HomeScreen extends StatelessWidget {
                   MaterialPageRoute(
                     builder: (context) =>
                         CallHistoryScreen(ownerId: currentUserId),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+
+            _buildMenuCard(
+              context: context,
+              title: "Help Center",
+              subtitle: "Find guides and FAQs",
+              icon: Icons.help_outline,
+              color: Colors.purple.shade600,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const HelpCenterScreen(),
                   ),
                 );
               },
