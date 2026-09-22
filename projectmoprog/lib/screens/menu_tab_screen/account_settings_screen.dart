@@ -59,28 +59,40 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
     final newPhone = _phoneController.text.trim();
     final newDob = _dobController.text.trim();
 
-    if (newName.isEmpty || newPhone.isEmpty) {
+    if (newName.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Name and phone number cannot be empty')),
+        const SnackBar(content: Text('Name cannot be empty')),
       );
       return;
     }
 
-    final updatedUser = UserModel(
-      id: newPhone,
-      name: newName,
-      phoneNumber: newPhone,
-      dateOfBirth: newDob.isEmpty ? null : newDob,
-    );
-
-    await AuthService().updateCurrentUser(updatedUser);
-
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Profile saved successfully!'), backgroundColor: Colors.green),
-    );
+    try {
+      final updatedUser = UserModel(
+        id: widget.phoneNumber,
+        name: newName,
+        phoneNumber: newPhone,
+        dateOfBirth: newDob.isEmpty ? null : newDob,
+      );
+      await AuthService().updateCurrentUser(updatedUser);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Profile saved successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pop(context, true);
+    } 
     
-    Navigator.pop(context, true); 
+    catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to save: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Widget _buildCustomTextField({
@@ -154,6 +166,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
         child: Column(
           children: [
             const SizedBox(height: 24),
+            // Profile Photo Section
             CircleAvatar(
               radius: 50,
               backgroundColor: Colors.grey.shade300,

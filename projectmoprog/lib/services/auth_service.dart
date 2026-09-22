@@ -1,11 +1,13 @@
 import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/user_model.dart';
 
 class AuthService {
   static const _sessionKey = 'current_user';
+  final SupabaseClient _supabase = Supabase.instance.client;
 
   Future<UserModel> login({
     required String phoneNumber,
@@ -58,13 +60,50 @@ class AuthService {
   }
 
   Future<UserModel?> getCurrentUser() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_sessionKey);
-    if (raw == null) return null;
-    return UserModel.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_sessionKey);
+      if (raw == null) return null;
+
+      final localUser = UserModel.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+
+      final data = await _supabase
+          .from('users')
+          .select()
+          .eq('phone_number', localUser.phoneNumber)
+          .maybeSingle();
+
+      if (data != null) {
+        final updatedUser = UserModel(
+          id: data['id']?.toString() ?? localUser.id,
+          name: data['name'] ?? localUser.name,
+          phoneNumber: data['phone_number'] ?? localUser.phoneNumber,
+          dateOfBirth: data['date_of_birth'],
+        );
+        
+        await _saveSession(updatedUser);
+        return updatedUser;
+      }
+      
+      return localUser;
+    } catch (e) {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_sessionKey);
+      if (raw == null) return null;
+      return UserModel.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+    }
   }
 
-  Future<void> updateCurrentUser(UserModel user) => _saveSession(user);
+  Future<void> updateCurrentUser(UserModel user) async {
+    await _saveSession(user);
+    
+    await _supabase.from('users').upsert({
+      'id': user.id,
+      'name': user.name,
+      'phone_number': user.phoneNumber,
+      'date_of_birth': user.dateOfBirth,
+    });
+  }
 
   Future<void> _saveSession(UserModel user) async {
     final prefs = await SharedPreferences.getInstance();

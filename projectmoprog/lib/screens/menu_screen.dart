@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../models/user_model.dart';
 import 'menu_tab_screen/account_settings_screen.dart';
+import 'menu_tab_screen/settings_screen.dart';
 import '../widgets/menu_item_tile.dart';
 import 'auth_screens/login_screen.dart';
 
@@ -110,33 +111,34 @@ class _MenuScreenState extends State<MenuScreen> {
 
             const SizedBox(height: 12),
 
-            MenuGroupCard(
-              children: [
-                MenuItemTile(
-                  icon: Icons.cake_outlined,
-                  title: 'Add Your Birthday!',
-                  subtitle: 'Add your birthday for celebrations, congratulations, and gifts.',
-                  onTap: () async {
-                    final bool? isUpdated = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => AccountSettingsScreen(
-                          initialName: _userName,
-                          phoneNumber: widget.currentUserId,
-                          initialDateOfBirth: _dateOfBirth,
+            if (_dateOfBirth == null || _dateOfBirth!.isEmpty) ...[
+              MenuGroupCard(
+                children: [
+                  MenuItemTile(
+                    icon: Icons.cake_outlined,
+                    title: 'Add Your Birthday!',
+                    subtitle: 'Add your birthday for celebrations, congratulations, and gifts.',
+                    onTap: () async {
+                      final bool? isUpdated = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AccountSettingsScreen(
+                            initialName: _userName,
+                            phoneNumber: widget.currentUserId,
+                            initialDateOfBirth: _dateOfBirth,
+                          ),
                         ),
-                      ),
-                    );
+                      );
 
-                    if (isUpdated == true) {
-                      _fetchUserProfile();
-                    }
-                  },
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 16),
+                      if (isUpdated == true) {
+                        _fetchUserProfile();
+                      }
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
 
             MenuGroupCard(
               children: [
@@ -225,7 +227,22 @@ class _MenuScreenState extends State<MenuScreen> {
                   icon: Icons.settings_outlined,
                   title: 'Settings',
                   showDivider: false, 
-                  onTap: () {},
+                  onTap: () async {
+                    final bool? isUpdated = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => SettingsScreen(
+                          userName: _userName,
+                          phoneNumber: widget.currentUserId,
+                          dateOfBirth: _dateOfBirth,
+                        ),
+                      ),
+                    );
+
+                    if (isUpdated == true) {
+                      _fetchUserProfile();
+                    }
+                  },
                 ),
               ],
             ),
@@ -252,4 +269,4 @@ class _MenuScreenState extends State<MenuScreen> {
     );
   }
 }
-  
+
