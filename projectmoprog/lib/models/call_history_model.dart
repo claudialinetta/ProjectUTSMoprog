@@ -1,3 +1,5 @@
+import 'contact_tag.dart';
+
 enum CallStatus {
   trusted('Trusted'),
   spam('Spam'),
@@ -46,6 +48,9 @@ class CallHistoryModel {
   final CallStatus status;
   final CallType type;
   final DateTime happenedAt;
+  final List<ContactTag> tags;
+
+  bool get isUnknownCaller => name == 'Unknown Caller' || name == phoneNumber;
 
   const CallHistoryModel({
     required this.id,
@@ -55,6 +60,7 @@ class CallHistoryModel {
     required this.status,
     required this.type,
     required this.happenedAt,
+    this.tags = const [],
   });
 
   String get initial {
@@ -63,6 +69,11 @@ class CallHistoryModel {
   }
 
   factory CallHistoryModel.fromMap(Map<String, dynamic> map) {
+    final tagsData = map['tags'] as List<dynamic>? ?? [];
+    final parsedTags = tagsData
+        .map((e) => ContactTag.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
+
     return CallHistoryModel(
       id: map['id'].toString(),
       ownerId: map['owner_id'].toString(),
@@ -73,6 +84,7 @@ class CallHistoryModel {
       happenedAt:
           DateTime.tryParse(map['happened_at']?.toString() ?? '')?.toLocal() ??
           DateTime.now(),
+      tags: parsedTags,
     );
   }
 }
