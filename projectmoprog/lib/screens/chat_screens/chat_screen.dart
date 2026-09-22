@@ -337,6 +337,8 @@ class _ChatScreenState extends State<ChatScreen> {
                   child: TextField(
                     controller: _messageController,
                     textCapitalization: TextCapitalization.sentences,
+                    textInputAction: TextInputAction.send,
+                    onSubmitted: (_) => _sendOrUpdateMessage(),
                     decoration: InputDecoration(
                       hintText: _editingMessage != null ? 'Edit message...' : 'Type a message...',
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
