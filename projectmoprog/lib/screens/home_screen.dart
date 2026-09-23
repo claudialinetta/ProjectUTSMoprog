@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'menu_features_screens/contact_screen.dart';
 import 'menu_features_screens/my_tags_screen.dart';
 import 'menu_features_screens/call_history_screen.dart';
+import 'menu_features_screens/protection_stats_screen.dart';
 import 'menu_features_screens/help_center_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -20,88 +21,108 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(title: const Text("GetContact Clone"), elevation: 0),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Home",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Home",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
 
-            _buildMenuCard(
-              context: context,
-              title: "Check My Tags",
-              subtitle: "Check what other people saved your name",
-              icon: Icons.tag,
-              color: Colors.blue.shade700,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => MyTagsScreen(
-                      currentUserPhoneNumber: currentUserPhoneNumber,
+              _buildMenuCard(
+                context: context,
+                title: "Check My Tags",
+                subtitle: "Check what other people saved your name",
+                icon: Icons.tag,
+                color: Colors.blue.shade700,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => MyTagsScreen(
+                        currentUserPhoneNumber: currentUserPhoneNumber,
+                      ),
                     ),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 16),
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
 
-            _buildMenuCard(
-              context: context,
-              title: "Contacts",
-              subtitle: "All your contacts inside one place",
-              icon: Icons.search,
-              color: Colors.teal.shade600,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        ContactScreen(currentUserId: currentUserId),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 16),
+              _buildMenuCard(
+                context: context,
+                title: "Contacts",
+                subtitle: "All your contacts inside one place",
+                icon: Icons.search,
+                color: Colors.teal.shade600,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          ContactScreen(currentUserId: currentUserId),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
 
-            _buildMenuCard(
-              context: context,
-              title: "Call History",
-              subtitle: "View your recent contact history",
-              icon: Icons.history,
-              color: Colors.orange.shade700,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        CallHistoryScreen(ownerId: currentUserId),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 16),
+              _buildMenuCard(
+                context: context,
+                title: "Call History",
+                subtitle: "View your recent contact history",
+                icon: Icons.history,
+                color: Colors.orange.shade700,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          CallHistoryScreen(ownerId: currentUserId),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
 
-            _buildMenuCard(
-              context: context,
-              title: "Help Center",
-              subtitle: "Find guides and FAQs",
-              icon: Icons.help_outline,
-              color: Colors.purple.shade600,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const HelpCenterScreen(),
-                  ),
-                );
-              },
-            ),
-          ],
+              _buildMenuCard(
+                context: context,
+                title: "Protection Stats",
+                subtitle: "See how you stay protected and help others",
+                icon: Icons.shield_outlined,
+                color: Colors.green.shade700,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          ProtectionStatsScreen(ownerId: currentUserId),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
+
+              _buildMenuCard(
+                context: context,
+                title: "Help Center",
+                subtitle: "Find guides and FAQs",
+                icon: Icons.help_outline,
+                color: Colors.purple.shade600,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const HelpCenterScreen(),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
