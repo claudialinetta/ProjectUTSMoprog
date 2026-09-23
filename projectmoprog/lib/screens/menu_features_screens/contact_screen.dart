@@ -375,6 +375,18 @@ class _ContactScreenState extends State<ContactScreen> {
                                   child: ContactCard(
                                     contact: contact,
                                     onReport: (reason) => _handleReport(contact, reason),
+                                    onTap: () async {
+                                      await Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => ContactDetailScreen(
+                                            contact: contact,
+                                            currentUserId: widget.currentUserId,
+                                          ),
+                                        ),
+                                      );
+                                      _fetchData(); 
+                                    },
                                   ),
                                 ),
                               ],

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/contact_model.dart';
 import '../chat_screens/chat_screen.dart';
 
-class ContactDetailScreen extends StatelessWidget {
+class ContactDetailScreen extends StatefulWidget {
   final ContactModel contact;
   final String currentUserId;
 
@@ -13,10 +14,196 @@ class ContactDetailScreen extends StatelessWidget {
   });
 
   @override
+  State<ContactDetailScreen> createState() => _ContactDetailScreenState();
+}
+
+class _ContactDetailScreenState extends State<ContactDetailScreen> {
+  final _supabase = Supabase.instance.client;
+
+  late ContactModel _currentContact;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentContact = widget.contact;
+  }
+
+  Future<void> _deleteContact() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Contact'),
+        content: const Text('Are you sure you want to delete this contact?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        await _supabase.from('contacts').delete().eq('id', _currentContact.id);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Contact deleted successfully'), backgroundColor: Colors.green),
+          );
+          Navigator.pop(context, true); 
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to delete contact: $e'), backgroundColor: Colors.red),
+          );
+        }
+      }
+    }
+  }
+
+  void _showEditForm() {
+    final nameController = TextEditingController(text: _currentContact.name);
+    final phoneController = TextEditingController(text: _currentContact.phoneNumber);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (bottomSheetContext) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom,
+            left: 24, right: 24, top: 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Edit Contact',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: nameController,
+                textCapitalization: TextCapitalization.words,
+                decoration: InputDecoration(
+                  labelText: 'Name',
+                  prefixIcon: const Icon(Icons.person_outline),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: phoneController,
+                keyboardType: TextInputType.phone,
+                decoration: InputDecoration(
+                  labelText: 'Phone Number',
+                  prefixIcon: const Icon(Icons.phone_outlined),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  backgroundColor: Colors.blue.shade600,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () async {
+                  final newName = nameController.text.trim();
+                  final newPhone = phoneController.text.trim();
+                  if (newName.isEmpty || newPhone.isEmpty) return;
+
+                  Navigator.pop(bottomSheetContext);
+
+                  try {
+                    await _supabase.from('contacts').update({
+                      'name': newName,
+                      'phoneNumber': newPhone,
+                      'avatarInitial': newName.isNotEmpty ? newName[0].toUpperCase() : '?',
+                    }).eq('id', _currentContact.id);
+
+                    setState(() {
+                      _currentContact = ContactModel(
+                        id: _currentContact.id,
+                        name: newName,
+                        phoneNumber: newPhone,
+                        tag: _currentContact.tag,
+                        reportCount: _currentContact.reportCount,
+                        avatarInitial: newName.isNotEmpty ? newName[0].toUpperCase() : '?',
+                        tags: _currentContact.tags,
+                        ownerId: _currentContact.ownerId,
+                      );
+                    });
+
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Contact updated!'), backgroundColor: Colors.green),
+                      );
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Failed to update: $e'), backgroundColor: Colors.red),
+                      );
+                    }
+                  }
+                },
+                child: const Text('Update Contact', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Column(
+      children: [
+        InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(50),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 28),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          style: TextStyle(color: color, fontWeight: FontWeight.w600),
+        ),
+      ],
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Detail Kontak'),
+        title: const Text('Contact Detail'),
         elevation: 0,
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.black,
@@ -29,7 +216,7 @@ class ContactDetailScreen extends StatelessWidget {
               radius: 50,
               backgroundColor: Colors.blue.shade100,
               child: Text(
-                contact.avatarInitial,
+                _currentContact.avatarInitial,
                 style: TextStyle(
                   fontSize: 40,
                   fontWeight: FontWeight.bold,
@@ -38,58 +225,50 @@ class ContactDetailScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-
             Text(
-              contact.name,
-              style: const TextStyle(
-                fontSize: 24, 
-                fontWeight: FontWeight.bold,
-              ),
+              _currentContact.name,
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-
             Text(
-              contact.phoneNumber,
-              style: const TextStyle(
-                fontSize: 18, 
-                color: Colors.grey,
-              ),
+              _currentContact.phoneNumber,
+              style: const TextStyle(fontSize: 18, color: Colors.grey),
             ),
             const SizedBox(height: 48),
-
-            InkWell(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ChatScreen(
-                      contact: contact,
-                      currentUserId: currentUserId,
-                    ),
-                  ),
-                );
-              },
-              borderRadius: BorderRadius.circular(50),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.chat_bubble_rounded,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildActionButton(
+                  icon: Icons.chat_bubble_rounded,
+                  label: 'Chat',
                   color: Colors.blue.shade600,
-                  size: 36,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ChatScreen(
+                          contact: _currentContact,
+                          currentUserId: widget.currentUserId,
+                        ),
+                      ),
+                    );
+                  },
                 ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Chat',
-              style: TextStyle(
-                color: Colors.blue.shade700,
-                fontWeight: FontWeight.w600,
-              ),
+                const SizedBox(width: 32),
+                _buildActionButton(
+                  icon: Icons.edit_outlined,
+                  label: 'Edit',
+                  color: Colors.orange.shade700,
+                  onTap: _showEditForm,
+                ),
+                const SizedBox(width: 32),
+                _buildActionButton(
+                  icon: Icons.delete_outline,
+                  label: 'Delete',
+                  color: Colors.red,
+                  onTap: _deleteContact,
+                ),
+              ],
             ),
           ],
         ),
