@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../services/auth_service.dart';
 import '../models/user_model.dart';
+import '../widgets/menu_item_tile.dart';
 import 'menu_tab_screen/account_settings_screen.dart';
 import 'menu_tab_screen/settings_screen.dart';
-import '../widgets/menu_item_tile.dart';
+import 'menu_tab_screen/profile_summary_screen.dart';
 import 'auth_screens/login_screen.dart';
 
 class MenuScreen extends StatefulWidget {
@@ -112,6 +113,52 @@ class _MenuScreenState extends State<MenuScreen> {
             ),
 
             const SizedBox(height: 12),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ProfileSummaryScreen(
+                        userName: _userName,
+                        userId: widget.currentUserId,
+                      ),
+                    ),
+                  );
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isDark ? const Color(0xFF2C2C2C) : const Color(0xFFE9ECEF),
+                      width: 0.8,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      const Icon(Icons.auto_awesome, color: Colors.blue, size: 24),
+                      const SizedBox(height: 8),
+                      Text(
+                        'My Profile Summary', 
+                        style: TextStyle(
+                          color: isDark ? Colors.grey.shade300 : const Color(0xFF1E293B),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600
+                        )
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
 
             if (_dateOfBirth == null || _dateOfBirth!.isEmpty) ...[
               MenuGroupCard(
@@ -271,4 +318,3 @@ class _MenuScreenState extends State<MenuScreen> {
     );
   }
 }
-
