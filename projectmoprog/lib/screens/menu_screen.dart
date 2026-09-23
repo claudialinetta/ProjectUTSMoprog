@@ -66,8 +66,10 @@ class _MenuScreenState extends State<MenuScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F6F9),
+      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF4F6F9),
       body: SafeArea(
         top: true,
         child: ListView(
@@ -75,13 +77,13 @@ class _MenuScreenState extends State<MenuScreen> {
           padding: const EdgeInsets.only(top: 8.0, bottom: 24.0),
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 32),
+              padding: const EdgeInsets.only(top: 48, bottom: 24),
               alignment: Alignment.center,
               child: Column(
                 children: [
                   CircleAvatar(
                     radius: 40,
-                    backgroundColor: Colors.blue.shade100,
+                    backgroundColor: isDark ? Colors.blue.withValues(alpha: 0.2) : Colors.blue.shade100,
                     child: Text(
                       _userInitial,
                       style: const TextStyle(
@@ -94,10 +96,10 @@ class _MenuScreenState extends State<MenuScreen> {
                   const SizedBox(height: 12),
                   Text(
                     _userName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 19,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E293B)
+                      color: isDark ? Colors.white : const Color(0xFF1E293B)
                     ),
                   ),
                   const SizedBox(height: 4),

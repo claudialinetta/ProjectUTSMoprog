@@ -28,7 +28,6 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
     super.initState();
     _nameController = TextEditingController(text: widget.initialName);
     _phoneController = TextEditingController(text: widget.phoneNumber);
-    _dobController = TextEditingController();
     _dobController = TextEditingController(text: widget.initialDateOfBirth ?? '');
   }
 
@@ -82,9 +81,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
         ),
       );
       Navigator.pop(context, true);
-    } 
-    
-    catch (e) {
+    } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -98,21 +95,24 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
   Widget _buildCustomTextField({
     required String label,
     required TextEditingController controller,
+    required bool isDark,
     Widget? suffixIcon,
     bool readOnly = false,
     VoidCallback? onTap,
     String? hintText,
   }) {
-
+    
     final isLocked = readOnly && onTap == null;
     
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(
+          color: isDark ? Colors.grey.shade800 : Colors.grey.shade300
+        ),
       ),
       child: TextField(
         controller: controller,
@@ -120,14 +120,23 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
         onTap: onTap,
         textAlignVertical: TextAlignVertical.center,
         style: TextStyle(
-          color: isLocked ? Colors.grey.shade400 : Colors.black87,
-          fontSize: 16
+          color: isLocked 
+              ? Colors.grey.shade500 
+              : (isDark ? Colors.white : Colors.black87),
+          fontSize: 16,
         ),
         decoration: InputDecoration(
           labelText: label.isEmpty ? null : label,
-          labelStyle: const TextStyle(color: Colors.blue, fontSize: 14, fontWeight: FontWeight.w600),
+          labelStyle: TextStyle(
+            color: isDark ? Colors.blue.shade300 : Colors.blue, 
+            fontSize: 14, 
+            fontWeight: FontWeight.w600,
+          ),
           hintText: hintText,
-          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 16),
+          hintStyle: TextStyle(
+            color: Colors.grey.shade500,
+            fontSize: 16
+          ),
           border: InputBorder.none,
           isDense: true,
           contentPadding: EdgeInsets.symmetric(vertical: label.isEmpty ? 14 : 8),
@@ -140,8 +149,10 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: isDark ? const Color(0xFF121212) : Colors.grey.shade50,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -150,15 +161,23 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.grey.shade200,
+              color: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
             ),
-            child: const Icon(Icons.arrow_back_ios_new, color: Colors.black87, size: 16),
+            child: Icon(
+              Icons.arrow_back_ios_new, 
+              color: isDark ? Colors.white : Colors.black87, 
+              size: 16,
+            ),
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Account Settings',
-          style: TextStyle(color: Colors.black87, fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: isDark ? Colors.white : Colors.black87, 
+            fontSize: 18, 
+            fontWeight: FontWeight.bold,
+          ),
         ),
         centerTitle: true,
       ),
@@ -166,27 +185,37 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
         child: Column(
           children: [
             const SizedBox(height: 24),
-            // Profile Photo Section
             CircleAvatar(
               radius: 50,
-              backgroundColor: Colors.grey.shade300,
-              child: Icon(Icons.person, size: 60, color: Colors.grey.shade600),
+              backgroundColor: isDark ? Colors.grey.shade800 : Colors.grey.shade300,
+              child: Icon(
+                Icons.person, 
+                size: 60, 
+                color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+              ),
             ),
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.blue.shade50,
+                color: isDark ? Colors.blue.withValues(alpha: 0.15) : Colors.blue.shade50,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.camera_alt, color: Colors.blue, size: 18),
+                  Icon(
+                    Icons.camera_alt, 
+                    color: isDark ? Colors.blue.shade300 : Colors.blue, 
+                    size: 18,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     'Add a Profile Photo',
-                    style: TextStyle(color: Colors.blue.shade700, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      color: isDark ? Colors.blue.shade300 : Colors.blue.shade700, 
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
               ),
@@ -196,12 +225,14 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
             _buildCustomTextField(
               label: 'Name and Surname',
               controller: _nameController,
+              isDark: isDark,
             ),
 
             _buildCustomTextField(
               label: 'Phone Number',
               controller: _phoneController,
               readOnly: true,
+              isDark: isDark,
             ),
             
             _buildCustomTextField(
@@ -209,8 +240,12 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
               hintText: 'Date of Birth',
               controller: _dobController,
               readOnly: true,
+              isDark: isDark,
               onTap: () => _selectDate(context),
-              suffixIcon: const Icon(Icons.calendar_month, color: Colors.grey),
+              suffixIcon: Icon(
+                Icons.calendar_month, 
+                color: isDark ? Colors.grey.shade400 : Colors.grey,
+              ),
             ),
 
             const SizedBox(height: 40),
@@ -230,7 +265,11 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                   onPressed: _saveProfile,
                   child: const Text(
                     'Save',
-                    style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      fontSize: 18, 
+                      color: Colors.white, 
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
@@ -240,9 +279,13 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
 
             TextButton(
               onPressed: () {},
-              child: const Text(
+              child: Text(
                 'Manage Account',
-                style: TextStyle(color: Colors.blue, fontSize: 16, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  color: isDark ? Colors.blue.shade300 : Colors.blue, 
+                  fontSize: 16, 
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
             const SizedBox(height: 32),
