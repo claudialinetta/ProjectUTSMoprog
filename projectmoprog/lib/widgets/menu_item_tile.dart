@@ -7,13 +7,15 @@ class MenuGroupCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         border: Border.symmetric(
           horizontal: BorderSide(
-            color: Color(0xFFE9ECEF), 
+            color: isDark ? const Color(0xFF2C2C2C) : const Color(0xFFE9ECEF), 
             width: 0.8,
           ),
         ),
@@ -45,10 +47,21 @@ class MenuItemTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Menyiapkan warna dinamis
+    final bgColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final iconBgColor = isDark ? Colors.blue.withValues(alpha: 0.15) : const Color(0xFFEDF4FF);
+    final iconColor = isDark ? Colors.blue : const Color(0xFF007AFF);
+    final titleColor = isDark ? Colors.white : const Color(0xFF1E293B);
+    final subtitleColor = isDark ? Colors.grey.shade400 : const Color(0xFF8A94A6);
+    final trailingColor = isDark ? Colors.grey.shade600 : const Color(0xFFCBD5E1);
+    final dividerColor = isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF1F5F9);
+
     return Column(
       children: [
         Material(
-          color: Colors.white,
+          color: bgColor,
           child: InkWell(
             onTap: onTap,
             child: Padding(
@@ -59,14 +72,10 @@ class MenuItemTile extends StatelessWidget {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEDF4FF),
+                      color: iconBgColor,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(
-                      icon,
-                      color: const Color(0xFF007AFF), 
-                      size: 22,
-                    ),
+                    child: Icon(icon, color: iconColor, size: 22),
                   ),
                   const SizedBox(width: 14),
 
@@ -77,19 +86,19 @@ class MenuItemTile extends StatelessWidget {
                       children: [
                         Text(
                           title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 15.5,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF1E293B),
+                            color: titleColor,
                           ),
                         ),
                         if (subtitle != null) ...[
                           const SizedBox(height: 3),
                           Text(
                             subtitle!,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
-                              color: Color(0xFF8A94A6),
+                              color: subtitleColor,
                               height: 1.25,
                             ),
                           ),
@@ -99,23 +108,18 @@ class MenuItemTile extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
 
-                  trailing ??
-                      const Icon(
-                        Icons.chevron_right_rounded,
-                        color: Color(0xFFCBD5E1),
-                        size: 22,
-                      ),
+                  trailing ?? Icon(Icons.chevron_right_rounded, color: trailingColor, size: 22),
                 ],
               ),
             ),
           ),
         ),
         if (showDivider)
-          const Divider(
+          Divider(
             height: 1,
             thickness: 0.6,
             indent: 74, 
-            color: Color(0xFFF1F5F9),
+            color: dividerColor,
           ),
       ],
     );
@@ -138,29 +142,32 @@ class SimpleMenuTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final bgColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final iconColor = isDark ? Colors.blue : const Color(0xFF007AFF);
+    final titleColor = isDark ? Colors.white : const Color(0xFF1E293B);
+    final dividerColor = isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF1F5F9);
+
     return Column(
       children: [
         Material(
-          color: Colors.white,
+          color: bgColor,
           child: InkWell(
             onTap: onTap,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
               child: Row(
                 children: [
-                  Icon(
-                    icon,
-                    color: const Color(0xFF007AFF),  
-                    size: 24,
-                  ),
+                  Icon(icon, color: iconColor, size: 24),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Text(
                       title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w500,
-                        color: Color(0xFF1E293B),
+                        color: titleColor,
                       ),
                     ),
                   ),
@@ -170,11 +177,11 @@ class SimpleMenuTile extends StatelessWidget {
           ),
         ),
         if (showDivider)
-          const Divider(
+          Divider(
             height: 1,
             thickness: 0.6,
             indent: 56, 
-            color: Color(0xFFF1F5F9),
+            color: dividerColor,
           ),
       ],
     );

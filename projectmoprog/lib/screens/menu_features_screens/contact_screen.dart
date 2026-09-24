@@ -321,6 +321,7 @@ class _ContactScreenState extends State<ContactScreen> {
                   child: _filteredContacts.isEmpty
                       ? const Center(child: Text("Contact not Found!"))
                       : ListView.builder(
+                          padding: const EdgeInsets.fromLTRB(0, 0, 0, 100),
                           itemCount: _filteredContacts.length,
                           itemBuilder: (context, index) {
                             final contact = _filteredContacts[index];
