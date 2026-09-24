@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:projectmoprog/services/protection_stats_service.dart';
 
 import '../../models/protection_stats.dart';
-import '../../services/protection_stats_service.dart';
 
 class ProtectionStatsScreen extends StatefulWidget {
   final String ownerId;
@@ -15,6 +15,7 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
   final ProtectionStatsService _service = ProtectionStatsService();
 
   ProtectionStats _stats = const ProtectionStats.empty();
+  List<ProtectionActivity> _activity = [];
   bool _isLoading = true;
   String? _error;
 
@@ -32,9 +33,11 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
 
     try {
       final stats = await _service.getStats(widget.ownerId);
+
       if (!mounted) return;
       setState(() {
         _stats = stats;
+        _activity = [];
         _isLoading = false;
       });
     } catch (e) {
@@ -90,6 +93,7 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
             value: _stats.reportsGiven,
             description: 'Reports you contributed to help protect other users.',
           ),
+          if (_activity.isNotEmpty) _buildActivitySection(),
         ],
       ),
     );
@@ -149,6 +153,42 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildActivitySection() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Recent Activity',
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 8),
+          Card(
+            elevation: 0.5,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Column(
+              children: _activity
+                  .map(
+                    (a) => ListTile(
+                      dense: true,
+                      leading: const Icon(Icons.notifications_none, size: 20),
+                      title: Text(
+                        a.message,
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
+        ],
       ),
     );
   }
