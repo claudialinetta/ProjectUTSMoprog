@@ -3,7 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/call_history_model.dart';
 import '../models/contact_tag.dart';
-
+import 'notification_service.dart';
 class CallHistoryService {
   static const String _table = 'call_history';
 
@@ -65,7 +65,7 @@ class CallHistoryService {
           finalTags.add(
             ContactTag(
               label: 'Spam',
-              addedByName: 'Sistem Otomatis',
+              addedByName: 'Automated system',
             ),
           );
         }
@@ -84,8 +84,28 @@ class CallHistoryService {
         'happened_at': (happenedAt ?? DateTime.now()).toUtc().toIso8601String(),
         'tags': finalTags.map((t) => t.toJson()).toList(),
       }, onConflict: 'owner_id,phone_key');
+
+      final notificationService = NotificationService();
+
+      if (type == CallType.missed) {
+        await notificationService.createNotification(
+          ownerId: ownerId,
+          title: 'Missed Call',
+          message: 'Unanswered call from $phoneNumber',
+          type: 'missed_call',
+        );
+      }
+
+      if (isUnknown && previousCallCount == 4) {
+        await notificationService.createNotification(
+          ownerId: ownerId,
+          title: 'Spam Alert',
+          message: 'Unknown number ($phoneNumber) has called you 5 times.',
+          type: 'spam_warning',
+        );
+      }
     } catch (e) {
-      debugPrint('Gagal mencatat riwayat: $e');
+      debugPrint('Failed to check history: $e');
     }
   }
 

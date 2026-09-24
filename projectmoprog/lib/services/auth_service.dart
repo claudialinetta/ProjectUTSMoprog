@@ -1,9 +1,10 @@
 import 'dart:convert';
-
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/user_model.dart';
+import 'notification_service.dart';
 
 class AuthService {
   static const _sessionKey = 'current_user';
@@ -28,6 +29,19 @@ class AuthService {
       phoneNumber: phoneNumber.trim(),
     );
     await _saveSession(user);
+
+    try {
+      final notificationService = NotificationService();
+      await notificationService.createNotification(
+        ownerId: user.id,
+        title: 'Login Berhasil',
+        message: 'Terdapat aktivitas login baru pada akun Anda menggunakan perangkat ini.',
+        type: 'login',
+      );
+    } catch (e) {
+      debugPrint('Gagal membuat notifikasi login: $e');
+    }
+
     return user;
   }
 

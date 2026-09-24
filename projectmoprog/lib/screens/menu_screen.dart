@@ -3,10 +3,13 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../models/user_model.dart';
 import '../widgets/menu_item_tile.dart';
+import '../../services/contact_service.dart';
 import 'menu_tab_screen/account_settings_screen.dart';
 import 'menu_tab_screen/settings_screen.dart';
 import 'menu_tab_screen/profile_summary_screen.dart';
 import 'auth_screens/login_screen.dart';
+import 'menu_features_screens/notification_screen.dart';
+import '../services/notification_service.dart';
 
 class MenuScreen extends StatefulWidget {
   final String currentUserId;
@@ -21,11 +24,14 @@ class _MenuScreenState extends State<MenuScreen> {
   String _userName = "Loading...";
   String _userInitial = "-";
   String? _dateOfBirth;
+  int _unreadNotifCount = 0;
 
   @override
   void initState() {
     super.initState();
     _fetchUserProfile();
+    _fetchUnreadNotifications();
+    ContactService().checkNewJoinedContacts(widget.currentUserId);
   }
 
   Future<void> _fetchUserProfile() async {
@@ -63,6 +69,13 @@ class _MenuScreenState extends State<MenuScreen> {
       MaterialPageRoute(builder: (_) => const LoginScreen()),
       (route) => false,
     );
+  }
+
+  Future<void> _fetchUnreadNotifications() async {
+    final count = await NotificationService().getUnreadCount(widget.currentUserId);
+    if (mounted) {
+      setState(() => _unreadNotifCount = count);
+    }
   }
 
   @override
@@ -195,7 +208,45 @@ class _MenuScreenState extends State<MenuScreen> {
                   icon: Icons.notifications_none_rounded,
                   title: 'Notifications',
                   showDivider: true,
-                  onTap: () {},
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_unreadNotifCount > 0) ...[
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            _unreadNotifCount > 9 ? '9+' : '$_unreadNotifCount',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                      ],
+                      const Icon(
+                        Icons.chevron_right_rounded,
+                        color: Color(0xFFCBD5E1),
+                        size: 22,
+                      ),
+                    ],
+                  ),
+                  onTap: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => NotificationScreen(
+                          currentUserId: widget.currentUserId,
+                        ),
+                      ),
+                    );
+                    _fetchUnreadNotifications();
+                  },
                 ),
                 MenuItemTile(
                   icon: Icons.remove_red_eye_outlined,

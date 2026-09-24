@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/contact_model.dart';
+import 'notification_service.dart';
 
 class ContactService {
   final _supabase = Supabase.instance.client;
@@ -31,6 +33,38 @@ class ContactService {
       .eq('savedPhoneNumber', myPhoneNumber);
     final List<String> savedNames = response.map((data) => data['savedName'] as String).toList();
     return savedNames.toSet().toList(); 
+  }
+
+  Future<void> checkNewJoinedContacts(String currentUserId) async {
+    try {
+      final contacts = await getContacts(currentUserId);
+      if (contacts.isEmpty) return;
+
+      final existingNotifs = await _supabase
+          .from('notifications')
+          .select('message')
+          .eq('owner_id', currentUserId)
+          .eq('type', 'new_contact');
+      final existingMessages = existingNotifs.map((n) => n['message'].toString()).toList();
+      final notificationService = NotificationService();
+  
+      for (var contact in contacts) {
+        final phone = contact.phoneNumber;
+        final name = contact.name;
+        final expectedMessage = '$name ($phone) joined Getcontact Clone';
+        
+        if (!existingMessages.contains(expectedMessage)) {
+          await notificationService.createNotification(
+            ownerId: currentUserId,
+            title: 'New Contact Joined!',
+            message: expectedMessage,
+            type: 'new_contact',
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Failed new contact joined: $e');
+    }
   }
 }
 
