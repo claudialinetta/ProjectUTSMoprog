@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/services.dart';
+
 import '../../models/contact_model.dart';
 import '../../services/contact_service.dart';
 import '../../widgets/contact_card.dart';
@@ -12,7 +13,7 @@ class ContactScreen extends StatefulWidget {
   const ContactScreen({super.key, required this.currentUserId});
 
   @override
-  State<ContactScreen> createState() => _ContactScreenState();  
+  State<ContactScreen> createState() => _ContactScreenState();
 }
 
 class _ContactScreenState extends State<ContactScreen> {
@@ -52,7 +53,9 @@ class _ContactScreenState extends State<ContactScreen> {
   Future<void> _fetchData() async {
     try {
       final contacts = await _service.getContacts(widget.currentUserId);
-      contacts.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+      contacts.sort(
+        (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+      );
 
       setState(() {
         _allContacts = contacts;
@@ -101,18 +104,24 @@ class _ContactScreenState extends State<ContactScreen> {
       _phoneController.clear();
 
       await _fetchData();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Contact added successfully!'), backgroundColor: Colors.green),
+          const SnackBar(
+            content: Text('Contact added successfully!'),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to add contact: $e'), backgroundColor: Colors.red,
-          duration: const Duration(seconds: 4),),
+          SnackBar(
+            content: Text('Failed to add contact: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
         );
       }
     }
@@ -149,7 +158,9 @@ class _ContactScreenState extends State<ContactScreen> {
                 decoration: InputDecoration(
                   labelText: 'Name',
                   prefixIcon: const Icon(Icons.person_outline),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -164,19 +175,26 @@ class _ContactScreenState extends State<ContactScreen> {
                   labelText: 'Phone Number',
                   hintText: '+62 812-3456-7890',
                   prefixIcon: const Icon(Icons.phone_outlined),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   backgroundColor: Colors.blue.shade600,
                   foregroundColor: Colors.white,
                 ),
                 onPressed: () => _saveNewContact(context),
-                child: const Text('Save Contact', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                child: const Text(
+                  'Save Contact',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
               ),
               const SizedBox(height: 24),
             ],
@@ -193,14 +211,23 @@ class _ContactScreenState extends State<ContactScreen> {
     setState(() {
       _filteredContacts = _allContacts.where((contact) {
         final nameMatch = contact.name.toLowerCase().contains(query);
-        final cleanPhone = contact.phoneNumber.replaceAll(RegExp(r'[\s\-]'), '');
+        final cleanPhone = contact.phoneNumber.replaceAll(
+          RegExp(r'[\s\-]'),
+          '',
+        );
         final phoneMatch = cleanPhone.contains(cleanQuery);
         final searchMatch = nameMatch || phoneMatch;
 
-        bool tagMatch = _selectedTag== 'All' || contact.tags.any((t) => t.label == _selectedTag);
-        
+        bool tagMatch =
+            _selectedTag == 'All' ||
+            contact.tags.any((t) => t.label == _selectedTag);
+
         if (_selectedTag != 'All') {
-          tagMatch = (contact.tag.toLowerCase() == _selectedTag.toLowerCase()) || contact.tags.any((t) => t.label.toLowerCase() == _selectedTag.toLowerCase());
+          tagMatch =
+              (contact.tag.toLowerCase() == _selectedTag.toLowerCase()) ||
+              contact.tags.any(
+                (t) => t.label.toLowerCase() == _selectedTag.toLowerCase(),
+              );
         }
 
         return searchMatch && tagMatch;
@@ -209,24 +236,25 @@ class _ContactScreenState extends State<ContactScreen> {
   }
 
   Future<void> _handleReport(ContactModel contact, String reason) async {
-    if (_reportedContacts.contains(contact.id)) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("You've already reported this contact."),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return; 
-    }
-
     try {
-      await _service.reportContact(contact.id, contact.reportCount);
+      final success = await _service.reportContact(
+        contactId: contact.id,
+        currentCount: contact.reportCount,
+        reporterId: widget.currentUserId,
+      );
 
-      setState(() {
-        _reportedContacts.add(contact.id); 
-        contact.reportCount += 1; 
-      });
+      if (!success) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("You've already reported this contact."),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+
+      setState(() => contact.reportCount += 1);
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -240,7 +268,9 @@ class _ContactScreenState extends State<ContactScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Failed to report the contact. Please check your internet connection."),
+          content: Text(
+            "Failed to report the contact. Please check your internet connection.",
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -296,7 +326,7 @@ class _ContactScreenState extends State<ContactScreen> {
                       itemBuilder: (context, index) {
                         final tag = _availableTags[index];
                         final isSelected = _selectedTag == tag;
-                        
+
                         return Padding(
                           padding: const EdgeInsets.only(right: 8.0),
                           child: ChoiceChip(
@@ -304,7 +334,9 @@ class _ContactScreenState extends State<ContactScreen> {
                             selected: isSelected,
                             selectedColor: Colors.blue.shade100,
                             labelStyle: TextStyle(
-                              color: isSelected ? Colors.blue.shade900 : Colors.black87,
+                              color: isSelected
+                                  ? Colors.blue.shade900
+                                  : Colors.black87,
                             ),
                             onSelected: (selected) {
                               setState(() {
@@ -325,21 +357,28 @@ class _ContactScreenState extends State<ContactScreen> {
                           itemCount: _filteredContacts.length,
                           itemBuilder: (context, index) {
                             final contact = _filteredContacts[index];
-                            final currentLetter = contact.name.isNotEmpty 
-                                ? contact.name[0].toUpperCase() 
+                            final currentLetter = contact.name.isNotEmpty
+                                ? contact.name[0].toUpperCase()
                                 : '?';
                             final previousLetter = index > 0
                                 ? (_filteredContacts[index - 1].name.isNotEmpty
-                                    ? _filteredContacts[index - 1].name[0].toUpperCase()
-                                    : '?')
+                                      ? _filteredContacts[index - 1].name[0]
+                                            .toUpperCase()
+                                      : '?')
                                 : '';
-                            final bool showHeader = currentLetter != previousLetter;
+                            final bool showHeader =
+                                currentLetter != previousLetter;
                             return Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 if (showHeader) ...[
                                   Padding(
-                                    padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 16.0, bottom: 8.0),
+                                    padding: const EdgeInsets.only(
+                                      left: 16.0,
+                                      right: 16.0,
+                                      top: 16.0,
+                                      bottom: 8.0,
+                                    ),
                                     child: Row(
                                       children: [
                                         Text(
@@ -366,27 +405,32 @@ class _ContactScreenState extends State<ContactScreen> {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => ContactDetailScreen(
-                                          contact: contact,
-                                          currentUserId: widget.currentUserId,
-                                        ),
+                                        builder: (context) =>
+                                            ContactDetailScreen(
+                                              contact: contact,
+                                              currentUserId:
+                                                  widget.currentUserId,
+                                            ),
                                       ),
                                     );
                                   },
                                   child: ContactCard(
                                     contact: contact,
-                                    onReport: (reason) => _handleReport(contact, reason),
+                                    onReport: (reason) =>
+                                        _handleReport(contact, reason),
                                     onTap: () async {
                                       await Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => ContactDetailScreen(
-                                            contact: contact,
-                                            currentUserId: widget.currentUserId,
-                                          ),
+                                          builder: (context) =>
+                                              ContactDetailScreen(
+                                                contact: contact,
+                                                currentUserId:
+                                                    widget.currentUserId,
+                                              ),
                                         ),
                                       );
-                                      _fetchData(); 
+                                      _fetchData();
                                     },
                                   ),
                                 ),
@@ -403,7 +447,10 @@ class _ContactScreenState extends State<ContactScreen> {
 
 class PhoneInputFormatter extends TextInputFormatter {
   @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
     String digits = newValue.text.replaceAll(RegExp(r'\D'), '');
 
     if (digits.isEmpty || digits == '62' || digits == '0') {
@@ -420,11 +467,9 @@ class PhoneInputFormatter extends TextInputFormatter {
     for (int i = 0; i < digits.length; i++) {
       if (i == 2) {
         formatted += ' ';
-      }
-      else if (i == 5) {
+      } else if (i == 5) {
         formatted += '-';
-      }
-      else if (i == 9) {
+      } else if (i == 9) {
         formatted += '-';
       }
       formatted += digits[i];

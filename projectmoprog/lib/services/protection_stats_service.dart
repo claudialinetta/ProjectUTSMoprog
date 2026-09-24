@@ -20,10 +20,10 @@ class ProtectionStatsService {
     var reportsCount = 0;
     try {
       reportsCount = await _db
-          .from('reports')
+          .from('contact_reports')
           .count(CountOption.exact)
-          .eq('reporter_id', ownerId);
-    } catch (e): print('Report count error: $e'); {
+          .eq('owner_id', ownerId);
+    } catch (e) {
       reportsCount = 0;
     }
 
@@ -32,5 +32,24 @@ class ProtectionStatsService {
       spamAvoided: spamCount,
       reportsGiven: reportsCount,
     );
+  }
+
+  Future<List<ProtectionActivity>> getRecentActivity(String ownerId) async {
+    try {
+      final rows = await _db
+          .from('notifications')
+          .select()
+          .eq('owner_id', ownerId)
+          .order('created_at', ascending: false)
+          .limit(5);
+
+      return rows
+          .map<ProtectionActivity>(
+            (row) => ProtectionActivity.fromMap(Map<String, dynamic>.from(row)),
+          )
+          .toList();
+    } catch (e) {
+      return [];
+    }
   }
 }
