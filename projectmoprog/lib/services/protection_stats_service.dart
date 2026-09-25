@@ -1,3 +1,4 @@
+import 'package:projectmoprog/models/call_history_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/protection_stats.dart';
@@ -7,7 +8,7 @@ class ProtectionStatsService {
 
   Future<ProtectionStats> getStats(String ownerId) async {
     final checkedCount = await _db
-        .from('call_history')
+        .from('number_checks')
         .count(CountOption.exact)
         .eq('owner_id', ownerId);
 
@@ -18,6 +19,7 @@ class ProtectionStatsService {
         .eq('status', 'spam');
 
     var reportsCount = 0;
+
     try {
       reportsCount = await _db
           .from('contact_reports')
@@ -51,5 +53,39 @@ class ProtectionStatsService {
     } catch (e) {
       return [];
     }
+  }
+
+  Future<List<Map<String, dynamic>>> getRecentChecks(
+    String ownerId, {
+    int limit = 10,
+  }) async {
+    final response = await _db
+        .from('number_checks')
+        .select()
+        .eq('owner_id', ownerId)
+        .order('checked_at', ascending: false)
+        .limit(limit);
+
+    return response
+        .map<Map<String, dynamic>>((row) => Map<String, dynamic>.from(row))
+        .toList();
+  }
+
+  Future<List<CallHistoryModel>> getRecentCalls(
+    String ownerId, {
+    int limit = 10,
+  }) async {
+    final response = await _db
+        .from('call_history')
+        .select()
+        .eq('owner_id', ownerId)
+        .order('happened_at', ascending: false)
+        .limit(limit);
+
+    return response
+        .map<CallHistoryModel>(
+          (row) => CallHistoryModel.fromMap(Map<String, dynamic>.from(row)),
+        )
+        .toList();
   }
 }

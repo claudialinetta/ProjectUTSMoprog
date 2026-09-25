@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/call_history_model.dart';
 import '../models/contact_tag.dart';
 import 'notification_service.dart';
+
 class CallHistoryService {
   static const String _table = 'call_history';
 
@@ -44,14 +45,14 @@ class CallHistoryService {
       final phoneKey = toPhoneKey(phoneNumber);
 
       final countResponse = await _db
-        .from(_table)
-        .select('id')
-        .eq('owner_id', ownerId)
-        .eq('phone_key', phoneKey)
-        .count(CountOption.exact);
+          .from(_table)
+          .select('id')
+          .eq('owner_id', ownerId)
+          .eq('phone_key', phoneKey)
+          .count(CountOption.exact);
 
       final int previousCallCount = countResponse.count;
-      
+
       CallStatus finalStatus = status;
       List<ContactTag> finalTags = List.from(initialTags);
 
@@ -60,17 +61,18 @@ class CallHistoryService {
       if (isUnknown && previousCallCount >= 4) {
         finalStatus = CallStatus.spam;
 
-        final hasSpamTag = finalTags.any((t) => t.label.toLowerCase().contains('spam'));
+        final hasSpamTag = finalTags.any(
+          (t) => t.label.toLowerCase().contains('spam'),
+        );
         if (!hasSpamTag) {
           finalTags.add(
-            ContactTag(
-              label: 'Spam',
-              addedByName: 'Automated system',
-            ),
+            ContactTag(label: 'Spam', addedByName: 'Automated system'),
           );
         }
       } else {
-        final hasSpamTag = finalTags.any((t) => t.label.toLowerCase().contains('spam'));
+        final hasSpamTag = finalTags.any(
+          (t) => t.label.toLowerCase().contains('spam'),
+        );
         if (hasSpamTag) finalStatus = CallStatus.spam;
       }
 
@@ -106,6 +108,7 @@ class CallHistoryService {
       }
     } catch (e) {
       debugPrint('Failed to check history: $e');
+      rethrow;
     }
   }
 
