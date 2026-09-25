@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:projectmoprog/models/contact_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../models/contact_model.dart';
+
+import '../../services/number_check_service.dart';
 import '../chat_screens/chat_screen.dart';
 
 class ContactDetailScreen extends StatefulWidget {
@@ -26,6 +28,27 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
   void initState() {
     super.initState();
     _currentContact = widget.contact;
+
+    print('OPENING CONTACT DETAIL');
+    print('currentUserId: ${widget.currentUserId}');
+    print('contact: ${_currentContact.name}');
+    print('phone: ${_currentContact.phoneNumber}');
+
+    _recordCheck();
+  }
+
+  Future<void> _recordCheck() async {
+    try {
+      await NumberCheckService().record(
+        ownerId: widget.currentUserId,
+        name: _currentContact.name,
+        phoneNumber: _currentContact.phoneNumber,
+      );
+
+      print('CHECK SUCCESS');
+    } catch (e) {
+      print('CHECK FAILED: $e');
+    }
   }
 
   Future<void> _deleteContact() async {
@@ -50,17 +73,23 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
     if (confirm == true) {
       try {
         await _supabase.from('contacts').delete().eq('id', _currentContact.id);
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Contact deleted successfully'), backgroundColor: Colors.green),
+            const SnackBar(
+              content: Text('Contact deleted successfully'),
+              backgroundColor: Colors.green,
+            ),
           );
-          Navigator.pop(context, true); 
+          Navigator.pop(context, true);
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to delete contact: $e'), backgroundColor: Colors.red),
+            SnackBar(
+              content: Text('Failed to delete contact: $e'),
+              backgroundColor: Colors.red,
+            ),
           );
         }
       }
@@ -69,7 +98,9 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
 
   void _showEditForm() {
     final nameController = TextEditingController(text: _currentContact.name);
-    final phoneController = TextEditingController(text: _currentContact.phoneNumber);
+    final phoneController = TextEditingController(
+      text: _currentContact.phoneNumber,
+    );
 
     showModalBottomSheet(
       context: context,
@@ -81,7 +112,9 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
         return Padding(
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom,
-            left: 24, right: 24, top: 24,
+            left: 24,
+            right: 24,
+            top: 24,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -99,7 +132,9 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
                 decoration: InputDecoration(
                   labelText: 'Name',
                   prefixIcon: const Icon(Icons.person_outline),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -109,14 +144,18 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
                 decoration: InputDecoration(
                   labelText: 'Phone Number',
                   prefixIcon: const Icon(Icons.phone_outlined),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   backgroundColor: Colors.blue.shade600,
                   foregroundColor: Colors.white,
                 ),
@@ -128,11 +167,16 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
                   Navigator.pop(bottomSheetContext);
 
                   try {
-                    await _supabase.from('contacts').update({
-                      'name': newName,
-                      'phoneNumber': newPhone,
-                      'avatarInitial': newName.isNotEmpty ? newName[0].toUpperCase() : '?',
-                    }).eq('id', _currentContact.id);
+                    await _supabase
+                        .from('contacts')
+                        .update({
+                          'name': newName,
+                          'phoneNumber': newPhone,
+                          'avatarInitial': newName.isNotEmpty
+                              ? newName[0].toUpperCase()
+                              : '?',
+                        })
+                        .eq('id', _currentContact.id);
 
                     setState(() {
                       _currentContact = ContactModel(
@@ -141,7 +185,9 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
                         phoneNumber: newPhone,
                         tag: _currentContact.tag,
                         reportCount: _currentContact.reportCount,
-                        avatarInitial: newName.isNotEmpty ? newName[0].toUpperCase() : '?',
+                        avatarInitial: newName.isNotEmpty
+                            ? newName[0].toUpperCase()
+                            : '?',
                         tags: _currentContact.tags,
                         ownerId: _currentContact.ownerId,
                       );
@@ -149,18 +195,27 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
 
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Contact updated!'), backgroundColor: Colors.green),
+                        const SnackBar(
+                          content: Text('Contact updated!'),
+                          backgroundColor: Colors.green,
+                        ),
                       );
                     }
                   } catch (e) {
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Failed to update: $e'), backgroundColor: Colors.red),
+                        SnackBar(
+                          content: Text('Failed to update: $e'),
+                          backgroundColor: Colors.red,
+                        ),
                       );
                     }
                   }
                 },
-                child: const Text('Update Contact', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                child: const Text(
+                  'Update Contact',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
               ),
               const SizedBox(height: 24),
             ],
@@ -202,9 +257,7 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       backgroundColor: Colors.transparent,
       elevation: 0,
       insetPadding: const EdgeInsets.symmetric(horizontal: 24),
@@ -216,7 +269,7 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.15),
-              spreadRadius: 2, 
+              spreadRadius: 2,
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),

@@ -22,7 +22,6 @@ class _ContactScreenState extends State<ContactScreen> {
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
-  final Set<String> _reportedContacts = {};
 
   List<ContactModel> _allContacts = [];
   List<ContactModel> _filteredContacts = [];
