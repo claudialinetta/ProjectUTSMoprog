@@ -192,6 +192,19 @@ class AuthService {
     await prefs.setString(_registeredUsersKey, jsonEncode(usersDb));
 
     await _saveSession(user);
+    await _saveSession(user);
+
+    try {
+      final notificationService = NotificationService();
+      await notificationService.createNotification(
+        ownerId: user.id,
+        title: 'Pengaturan Tanggal Lahir',
+        message: 'Silakan lengkapi tanggal lahir Anda untuk melengkapi profil.',
+        type: 'birthday', 
+      );
+    } catch (e) {
+      debugPrint('Gagal membuat notifikasi: $e');
+    }
 
     return user;
   }

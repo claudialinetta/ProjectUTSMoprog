@@ -28,4 +28,16 @@ class NotificationModel {
       createdAt: DateTime.tryParse(map['created_at']?.toString() ?? '')?.toLocal() ?? DateTime.now(),
     );
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'owner_id': ownerId,
+      'title': title,
+      'message': message,
+      'type': type,
+      'is_read': isRead,
+      'created_at': createdAt.toIso8601String(),
+    };
+  }
 }
