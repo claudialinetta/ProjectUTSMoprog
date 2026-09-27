@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/services.dart';
-
+import 'package:provider/provider.dart';
 import '../../models/contact_model.dart';
 import '../../services/contact_service.dart';
 import '../../widgets/contact_card.dart';
 import 'contact_detail_screen.dart';
+import '../../providers/contact_provider.dart';
 
 class ContactScreen extends StatefulWidget {
   final String currentUserId;
@@ -18,64 +18,20 @@ class ContactScreen extends StatefulWidget {
 
 class _ContactScreenState extends State<ContactScreen> {
   final ContactService _service = ContactService();
-  final _supabase = Supabase.instance.client;
+  
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
 
-  List<ContactModel> _allContacts = [];
-  List<ContactModel> _filteredContacts = [];
-  bool _isLoading = true;
-
-  String _selectedTag = 'All';
-
   @override
   void initState() {
     super.initState();
-    _fetchData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<ContactProvider>(context, listen: false).fetchContacts(widget.currentUserId);
+    });
   }
 
-  List<String> get _availableTags {
-    final tags = <String>{};
-    for (var contact in _allContacts) {
-      if (contact.tag.isNotEmpty && contact.tag != '-') {
-        tags.add(contact.tag);
-      }
-      if (contact.tags.isNotEmpty) {
-        tags.addAll(contact.tags.map((t) => t.label));
-      }
-    }
-    final sortedTags = tags.toList()..sort();
-    return ['All', ...sortedTags];
-  }
-
-  Future<void> _fetchData() async {
-    try {
-      final contacts = await _service.getContacts(widget.currentUserId);
-      contacts.sort(
-        (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
-      );
-
-      setState(() {
-        _allContacts = contacts;
-        _filteredContacts = contacts;
-        _isLoading = false;
-        _selectedTag = 'All';
-      });
-      _filterContacts();
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Failed to load data: $e')));
-      }
-    }
-  }
-
-  Future<void> _saveNewContact(BuildContext bottomSheetContext) async {
+  Future<void> _saveNewContact(BuildContext bottomSheetContext, ContactProvider provider) async {
     final name = _nameController.text.trim();
     final phone = _phoneController.text.trim();
 
@@ -87,22 +43,12 @@ class _ContactScreenState extends State<ContactScreen> {
     }
 
     Navigator.pop(bottomSheetContext);
-    setState(() => _isLoading = true);
 
     try {
-      await _supabase.from('contacts').insert({
-        'name': name,
-        'phoneNumber': phone,
-        'ownerId': widget.currentUserId,
-        'tag': 'Unknown',
-        'reportCount': 0,
-        'avatarInitial': name.isNotEmpty ? name[0].toUpperCase() : '?',
-      });
+      await provider.addContact(widget.currentUserId, name, phone);
 
       _nameController.clear();
       _phoneController.clear();
-
-      await _fetchData();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -113,7 +59,6 @@ class _ContactScreenState extends State<ContactScreen> {
         );
       }
     } catch (e) {
-      setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -126,7 +71,7 @@ class _ContactScreenState extends State<ContactScreen> {
     }
   }
 
-  void _showAddContactForm() {
+  void _showAddContactForm(ContactProvider provider) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -137,9 +82,7 @@ class _ContactScreenState extends State<ContactScreen> {
         return Padding(
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom,
-            left: 24,
-            right: 24,
-            top: 24,
+            left: 24, right: 24, top: 24,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -157,9 +100,7 @@ class _ContactScreenState extends State<ContactScreen> {
                 decoration: InputDecoration(
                   labelText: 'Name',
                   prefixIcon: const Icon(Icons.person_outline),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
               const SizedBox(height: 16),
@@ -174,22 +115,18 @@ class _ContactScreenState extends State<ContactScreen> {
                   labelText: 'Phone Number',
                   hintText: '+62 812-3456-7890',
                   prefixIcon: const Icon(Icons.phone_outlined),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
               const SizedBox(height: 24),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   backgroundColor: Colors.blue.shade600,
                   foregroundColor: Colors.white,
                 ),
-                onPressed: () => _saveNewContact(context),
+                onPressed: () => _saveNewContact(context, provider),
                 child: const Text(
                   'Save Contact',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -201,37 +138,6 @@ class _ContactScreenState extends State<ContactScreen> {
         );
       },
     );
-  }
-
-  void _filterContacts() {
-    final query = _searchController.text.toLowerCase();
-    final cleanQuery = query.replaceAll(RegExp(r'[\s\-]'), '');
-
-    setState(() {
-      _filteredContacts = _allContacts.where((contact) {
-        final nameMatch = contact.name.toLowerCase().contains(query);
-        final cleanPhone = contact.phoneNumber.replaceAll(
-          RegExp(r'[\s\-]'),
-          '',
-        );
-        final phoneMatch = cleanPhone.contains(cleanQuery);
-        final searchMatch = nameMatch || phoneMatch;
-
-        bool tagMatch =
-            _selectedTag == 'All' ||
-            contact.tags.any((t) => t.label == _selectedTag);
-
-        if (_selectedTag != 'All') {
-          tagMatch =
-              (contact.tag.toLowerCase() == _selectedTag.toLowerCase()) ||
-              contact.tags.any(
-                (t) => t.label.toLowerCase() == _selectedTag.toLowerCase(),
-              );
-        }
-
-        return searchMatch && tagMatch;
-      }).toList();
-    });
   }
 
   Future<void> _handleReport(ContactModel contact, String reason) async {
@@ -267,9 +173,7 @@ class _ContactScreenState extends State<ContactScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            "Failed to report the contact. Please check your internet connection.",
-          ),
+          content: Text("Failed to report the contact. Please check your internet connection."),
           backgroundColor: Colors.red,
         ),
       );
@@ -279,167 +183,149 @@ class _ContactScreenState extends State<ContactScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _nameController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("My Contacts")),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAddContactForm,
-        backgroundColor: Colors.blue.shade600,
-        tooltip: 'Add Contact',
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                Container(
-                  color: Colors.white,
-                  padding: const EdgeInsets.all(12.0),
-                  child: TextField(
-                    controller: _searchController,
-                    onChanged: (value) => _filterContacts(),
-                    decoration: InputDecoration(
-                      hintText: 'Search by name or phone number...',
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30),
-                        borderSide: BorderSide.none,
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey.shade200,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                    ),
-                  ),
-                ),
-                if (_allContacts.isNotEmpty)
-                  Container(
-                    height: 50,
-                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: _availableTags.length,
-                      itemBuilder: (context, index) {
-                        final tag = _availableTags[index];
-                        final isSelected = _selectedTag == tag;
-
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8.0),
-                          child: ChoiceChip(
-                            label: Text(tag),
-                            selected: isSelected,
-                            selectedColor: Colors.blue.shade100,
-                            labelStyle: TextStyle(
-                              color: isSelected
-                                  ? Colors.blue.shade900
-                                  : Colors.black87,
-                            ),
-                            onSelected: (selected) {
-                              setState(() {
-                                _selectedTag = selected ? tag : 'All';
-                              });
-                              _filterContacts();
-                            },
+    return Consumer<ContactProvider>(
+      builder: (context, provider, child) {
+        return Scaffold(
+          appBar: AppBar(title: const Text("My Contacts")),
+          floatingActionButton: FloatingActionButton(
+            onPressed: () => _showAddContactForm(provider),
+            backgroundColor: Colors.blue.shade600,
+            tooltip: 'Add Contact',
+            child: const Icon(Icons.add, color: Colors.white),
+          ),
+          body: provider.isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : Column(
+                  children: [
+                    Container(
+                      color: Colors.white,
+                      padding: const EdgeInsets.all(12.0),
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: (value) => provider.setSearchQuery(value),
+                        decoration: InputDecoration(
+                          hintText: 'Search by name or phone number...',
+                          prefixIcon: const Icon(Icons.search),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: BorderSide.none,
                           ),
-                        );
-                      },
+                          filled: true,
+                          fillColor: Colors.grey.shade200,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                        ),
+                      ),
                     ),
-                  ),
-                Expanded(
-                  child: _filteredContacts.isEmpty
-                      ? const Center(child: Text("Contact not Found!"))
-                      : ListView.builder(
-                          padding: const EdgeInsets.fromLTRB(0, 0, 0, 100),
-                          itemCount: _filteredContacts.length,
+                    if (provider.allContacts.isNotEmpty)
+                      Container(
+                        height: 50,
+                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: provider.availableTags.length,
                           itemBuilder: (context, index) {
-                            final contact = _filteredContacts[index];
-                            final currentLetter = contact.name.isNotEmpty
-                                ? contact.name[0].toUpperCase()
-                                : '?';
-                            final previousLetter = index > 0
-                                ? (_filteredContacts[index - 1].name.isNotEmpty
-                                      ? _filteredContacts[index - 1].name[0]
-                                            .toUpperCase()
-                                      : '?')
-                                : '';
-                            final bool showHeader =
-                                currentLetter != previousLetter;
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (showHeader) ...[
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                      left: 16.0,
-                                      right: 16.0,
-                                      top: 16.0,
-                                      bottom: 8.0,
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Text(
-                                          currentLetter,
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.blue.shade800,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Divider(
-                                            color: Colors.grey.shade300,
-                                            thickness: 1.5,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                                GestureDetector(
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            ContactDetailScreen(
-                                              contact: contact,
-                                              currentUserId:
-                                                  widget.currentUserId,
-                                            ),
-                                      ),
-                                    );
-                                  },
-                                  child: ContactCard(
-                                    contact: contact,
-                                    onReport: (reason) =>
-                                        _handleReport(contact, reason),
-                                    onTap: () async {
-                                      await Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              ContactDetailScreen(
-                                                contact: contact,
-                                                currentUserId:
-                                                    widget.currentUserId,
-                                              ),
-                                        ),
-                                      );
-                                      _fetchData();
-                                    },
-                                  ),
+                            final tag = provider.availableTags[index];
+                            final isSelected = provider.selectedTag == tag;
+
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 8.0),
+                              child: ChoiceChip(
+                                label: Text(tag),
+                                selected: isSelected,
+                                selectedColor: Colors.blue.shade100,
+                                labelStyle: TextStyle(
+                                  color: isSelected ? Colors.blue.shade900 : Colors.black87,
                                 ),
-                              ],
+                                onSelected: (selected) {
+                                  provider.setSelectedTag(selected ? tag : 'All');
+                                },
+                              ),
                             );
                           },
                         ),
+                      ),
+                    Expanded(
+                      child: provider.filteredContacts.isEmpty
+                          ? const Center(child: Text("Contact not Found!"))
+                          : ListView.builder(
+                              padding: const EdgeInsets.fromLTRB(0, 0, 0, 100),
+                              itemCount: provider.filteredContacts.length,
+                              itemBuilder: (context, index) {
+                                final contact = provider.filteredContacts[index];
+                                final currentLetter = contact.name.isNotEmpty
+                                    ? contact.name[0].toUpperCase()
+                                    : '?';
+                                final previousLetter = index > 0
+                                    ? (provider.filteredContacts[index - 1].name.isNotEmpty
+                                          ? provider.filteredContacts[index - 1].name[0].toUpperCase()
+                                          : '?')
+                                    : '';
+                                final bool showHeader = currentLetter != previousLetter;
+                                
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (showHeader) ...[
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          left: 16.0, right: 16.0, top: 16.0, bottom: 8.0,
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Text(
+                                              currentLetter,
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.blue.shade800,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Divider(
+                                                color: Colors.grey.shade300,
+                                                thickness: 1.5,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                    ContactCard(
+                                      contact: contact,
+                                      onReport: (reason) => _handleReport(contact, reason),
+                                      onTap: () async {
+                                        await Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                ContactDetailScreen(
+                                                  contact: contact,
+                                                  currentUserId: widget.currentUserId,
+                                                ),
+                                          ),
+                                        );
+                                        if (mounted) {
+                                           Provider.of<ContactProvider>(context, listen: false).fetchContacts(widget.currentUserId);
+                                        }
+                                      },
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+        );
+      }
     );
   }
 }

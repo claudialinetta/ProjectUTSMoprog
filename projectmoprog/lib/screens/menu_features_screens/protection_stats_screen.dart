@@ -101,12 +101,10 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
 
           const SizedBox(height: 20),
 
-          // Numbers Checked
           _buildNumbersCheckedCard(),
 
           const SizedBox(height: 12),
 
-          // Spam Avoided
           _buildStatCard(
             icon: Icons.shield_outlined,
             color: Colors.red,
@@ -118,7 +116,6 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
 
           const SizedBox(height: 12),
 
-          // Reports Given
           _buildStatCard(
             icon: Icons.flag_outlined,
             color: Colors.orange,

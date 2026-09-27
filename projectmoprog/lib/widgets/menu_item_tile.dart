@@ -49,7 +49,6 @@ class MenuItemTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Menyiapkan warna dinamis
     final bgColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
     final iconBgColor = isDark ? Colors.blue.withValues(alpha: 0.15) : const Color(0xFFEDF4FF);
     final iconColor = isDark ? Colors.blue : const Color(0xFF007AFF);
