@@ -164,6 +164,16 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
                   final newPhone = phoneController.text.trim();
                   if (newName.isEmpty || newPhone.isEmpty) return;
 
+                  String newInitial = '?';
+                  final words = newName.split(RegExp(r'\s+'));
+                  if (words.isNotEmpty && words[0].isNotEmpty) {
+                    if (words.length == 1) {
+                      newInitial = words[0][0].toUpperCase();
+                    } else {
+                      newInitial = (words[0][0] + words[1][0]).toUpperCase();
+                    }
+                  }
+
                   Navigator.pop(bottomSheetContext);
 
                   try {
@@ -172,9 +182,7 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
                         .update({
                           'name': newName,
                           'phoneNumber': newPhone,
-                          'avatarInitial': newName.isNotEmpty
-                              ? newName[0].toUpperCase()
-                              : '?',
+                          'avatarInitial': newInitial,
                         })
                         .eq('id', _currentContact.id);
 
@@ -185,9 +193,7 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
                         phoneNumber: newPhone,
                         tag: _currentContact.tag,
                         reportCount: _currentContact.reportCount,
-                        avatarInitial: newName.isNotEmpty
-                            ? newName[0].toUpperCase()
-                            : '?',
+                        avatarInitial: newInitial,
                         tags: _currentContact.tags,
                         ownerId: _currentContact.ownerId,
                       );

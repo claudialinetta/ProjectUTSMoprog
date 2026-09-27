@@ -32,7 +32,7 @@ class ContactService {
         'contact_id': int.parse(contactId),
       });
     } on PostgrestException catch (e) {
-      if (e.code == '23505') return false; // already reported before
+      if (e.code == '23505') return false;
       throw Exception('Failed to log report: $e');
     }
 
