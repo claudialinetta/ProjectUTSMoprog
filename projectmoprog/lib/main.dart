@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:projectmoprog/screens/auth_screens/login_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-
+import 'package:provider/provider.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_manager.dart';
+import 'providers/contact_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,7 +19,14 @@ void main() async {
 
   await ThemeManager.init();
 
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ContactProvider()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {

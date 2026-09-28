@@ -1,347 +1,505 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
-import '../../models/call_history_model.dart';
-import '../../models/protection_stats.dart';
-import '../../services/protection_stats_service.dart';
+import '../../models/contact_model.dart';
+import '../../services/contact_service.dart';
+import '../../widgets/contact_card.dart';
+import 'contact_detail_screen.dart';
+import '../../providers/contact_provider.dart';
 
-class ProtectionStatsScreen extends StatefulWidget {
-  final String ownerId;
-  const ProtectionStatsScreen({super.key, required this.ownerId});
+class ContactScreen extends StatefulWidget {
+  final String currentUserId;
+
+  const ContactScreen({super.key, required this.currentUserId});
 
   @override
-  State<ProtectionStatsScreen> createState() => _ProtectionStatsScreenState();
+  State<ContactScreen> createState() => _ContactScreenState();
 }
 
-class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
-  final ProtectionStatsService _service = ProtectionStatsService();
+class _ContactScreenState extends State<ContactScreen> {
+  final ContactService _service = ContactService();
 
-  ProtectionStats _stats = const ProtectionStats.empty();
-  List<CheckEntry> _checkedHistory = [];
-  List<CallHistoryModel> _spamHistory = [];
-  List<ReportHistoryEntry> _reportHistory = [];
-  List<DailyActivity> _weeklyActivity = [];
-  bool _isLoading = true;
-  String? _error;
+  final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _load();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<ContactProvider>(
+        context,
+        listen: false,
+      ).fetchContacts(widget.currentUserId);
+    });
   }
 
-  Future<void> _load() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
+  Future<void> _saveNewContact(
+    BuildContext bottomSheetContext,
+    ContactProvider provider,
+  ) async {
+    final name = _nameController.text.trim();
+    final phone = _phoneController.text.trim();
+
+    if (name.isEmpty || phone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Name and Phone Number cannot be empty.'),
+        ),
+      );
+      return;
+    }
+
+    Navigator.pop(bottomSheetContext);
 
     try {
-      final results = await Future.wait([
-        _service.getStats(widget.ownerId),
-        _service.getCheckedHistory(widget.ownerId),
-        _service.getSpamHistory(widget.ownerId),
-        _service.getReportHistory(widget.ownerId),
-        _service.getWeeklyActivity(widget.ownerId),
-      ]);
+      await provider.addContact(
+        widget.currentUserId,
+        name,
+        phone,
+      );
 
-      if (!mounted) return;
-      setState(() {
-        _stats = results[0] as ProtectionStats;
-        _checkedHistory = results[1] as List<CheckEntry>;
-        _spamHistory = results[2] as List<CallHistoryModel>;
-        _reportHistory = results[3] as List<ReportHistoryEntry>;
-        _weeklyActivity = results[4] as List<DailyActivity>;
-        _isLoading = false;
-      });
+      _nameController.clear();
+      _phoneController.clear();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Contact added successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
     } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-        _error = 'Failed to load your stats.\nCheck your internet connection.';
-      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to add contact: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
     }
   }
 
-  String _relativeTime(DateTime dt) {
-    final diff = DateTime.now().difference(dt);
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    if (diff.inDays == 1) return 'Yesterday';
-    if (diff.inDays < 7) return '${diff.inDays}d ago';
-    return '${dt.day}/${dt.month}/${dt.year}';
+  void _showAddContactForm(ContactProvider provider) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(16),
+        ),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 24,
+            right: 24,
+            top: 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Add New Contact',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: _nameController,
+                textCapitalization: TextCapitalization.words,
+                decoration: InputDecoration(
+                  labelText: 'Name',
+                  prefixIcon: const Icon(Icons.person_outline),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  PhoneInputFormatter(),
+                ],
+                decoration: InputDecoration(
+                  labelText: 'Phone Number',
+                  hintText: '+62 812-3456-7890',
+                  prefixIcon: const Icon(Icons.phone_outlined),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  backgroundColor: Colors.blue.shade600,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () => _saveNewContact(
+                  context,
+                  provider,
+                ),
+                child: const Text(
+                  'Save Contact',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _handleReport(
+    ContactModel contact,
+    String reason,
+  ) async {
+    try {
+      final success = await _service.reportContact(
+        contactId: contact.id,
+        currentCount: contact.reportCount,
+        reporterId: widget.currentUserId,
+        reason: reason,
+        contactName: contact.name,
+        phoneNumber: contact.phoneNumber,
+      );
+
+      if (!success) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              "You've already reported this contact.",
+            ),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+
+      setState(() {
+        contact.reportCount += 1;
+      });
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "${contact.phoneNumber} was reported as '$reason'",
+          ),
+          backgroundColor: Colors.redAccent,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Report failed: $e');
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Report failed: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 6),
+        ),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _nameController.dispose();
+    _phoneController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Protection Stats')),
-      body: _buildBody(),
-    );
-  }
-
-  Widget _buildBody() {
-    if (_isLoading) return const Center(child: CircularProgressIndicator());
-    if (_error != null) return _buildError();
-
-    return RefreshIndicator(
-      onRefresh: _load,
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const Text(
-            'Here is how you have been protected and how you have helped '
-            'protect others.',
-            style: TextStyle(color: Colors.black54),
+    return Consumer<ContactProvider>(
+      builder: (context, provider, child) {
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text("My Contacts"),
           ),
-          const SizedBox(height: 20),
-          _buildExpandableCard(
-            icon: Icons.search,
-            color: Colors.blue,
-            label: 'Numbers Checked',
-            value: _stats.numbersChecked,
-            description:
-                'Numbers you have searched or called through this app.',
-            children: _checkedHistory
-                .map(
-                  (item) => _buildHistoryRow(
-                    icon: Icons.search,
-                    color: Colors.blue,
-                    title: item.phoneNumber,
-                    subtitle:
-                        'Number checked • ${_relativeTime(item.checkedAt)}',
-                  ),
-                )
-                .toList(),
-          ),
-          const SizedBox(height: 12),
-          _buildWeeklyChart(),
-          const SizedBox(height: 12),
-          _buildExpandableCard(
-            icon: Icons.shield_outlined,
-            color: Colors.red,
-            label: 'Spam Avoided',
-            value: _stats.spamAvoided,
-            description:
-                'Spam numbers you were warned about when checking a contact.',
-            children: _spamHistory
-                .map(
-                  (item) => _buildHistoryRow(
-                    icon: Icons.shield_outlined,
-                    color: Colors.red,
-                    title: item.name,
-                    subtitle:
-                        '${item.phoneNumber} • ${_relativeTime(item.happenedAt)}',
-                  ),
-                )
-                .toList(),
-          ),
-          const SizedBox(height: 12),
-          _buildExpandableCard(
-            icon: Icons.flag_outlined,
-            color: Colors.orange,
-            label: 'Reports Given',
-            value: _stats.reportsGiven,
-            description: 'Reports you contributed to help protect other users.',
-            children: _reportHistory
-                .map(
-                  (item) => _buildHistoryRow(
-                    icon: Icons.flag_outlined,
-                    color: Colors.orange,
-                    title: item.contactName,
-                    subtitle:
-                        '${item.reason} • ${_relativeTime(item.createdAt)}',
-                  ),
-                )
-                .toList(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildExpandableCard({
-    required IconData icon,
-    required Color color,
-    required String label,
-    required int value,
-    required String description,
-    required List<Widget> children,
-  }) {
-    return Card(
-      elevation: 1,
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: ExpansionTile(
-        tilePadding: const EdgeInsets.all(16),
-        leading: CircleAvatar(
-          radius: 24,
-          backgroundColor: color.withValues(alpha: 0.15),
-          child: Icon(icon, color: color),
-        ),
-        title: Text(
-          '$value',
-          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-            Text(
-              description,
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+          floatingActionButton: FloatingActionButton(
+            onPressed: () => _showAddContactForm(provider),
+            backgroundColor: Colors.blue.shade600,
+            tooltip: 'Add Contact',
+            child: const Icon(
+              Icons.add,
+              color: Colors.white,
             ),
-          ],
-        ),
-        children: children.isEmpty
-            ? [
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(
-                    'No activity yet',
-                    style: TextStyle(color: Colors.grey.shade500),
-                  ),
-                ),
-              ]
-            : children,
-      ),
-    );
-  }
-
-  Widget _buildHistoryRow({
-    required IconData icon,
-    required Color color,
-    required String title,
-    required String subtitle,
-  }) {
-    return ListTile(
-      dense: true,
-      leading: Icon(icon, size: 18, color: color),
-      title: Text(
-        title,
-        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-      ),
-    );
-  }
-
-  Widget _buildWeeklyChart() {
-    if (_weeklyActivity.isEmpty) return const SizedBox.shrink();
-
-    final maxCount = _weeklyActivity
-        .map((d) => d.count)
-        .fold(0, (a, b) => a > b ? a : b);
-    final activeDays = _weeklyActivity.where((d) => d.count > 0).length;
-    final total = _weeklyActivity.fold(0, (sum, d) => sum + d.count);
-    const weekdayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Row(
-              children: [
-                Icon(Icons.show_chart, size: 20, color: Colors.blue),
-                SizedBox(width: 8),
-                Text(
-                  'Check Activity',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-              ],
-            ),
-            Text(
-              'Last 7 days',
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 85,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: _weeklyActivity.map((d) {
-                  final ratio = maxCount == 0 ? 0.0 : d.count / maxCount;
-                  return Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 3),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Container(
-                            height: 40 * ratio + 4,
-                            decoration: BoxDecoration(
-                              color: d.count > 0
-                                  ? Colors.blue
-                                  : Colors.grey.shade200,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
+          ),
+          body: provider.isLoading
+              ? const Center(
+                  child: CircularProgressIndicator(),
+                )
+              : Column(
+                  children: [
+                    Container(
+                      color: Colors.white,
+                      padding: const EdgeInsets.all(12.0),
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: (value) {
+                          provider.setSearchQuery(value);
+                        },
+                        decoration: InputDecoration(
+                          hintText:
+                              'Search by name or phone number...',
+                          prefixIcon: const Icon(Icons.search),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: BorderSide.none,
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            weekdayLabels[d.day.weekday - 1],
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: Colors.grey,
-                            ),
+                          filled: true,
+                          fillColor: Colors.grey.shade200,
+                          contentPadding:
+                              const EdgeInsets.symmetric(
+                            vertical: 0,
                           ),
-                        ],
+                        ),
                       ),
                     ),
-                  );
-                }).toList(),
-              ),
-            ),
-            const Divider(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildMiniStat('Total checks', '$total'),
-                _buildMiniStat('Active days', '$activeDays'),
-                _buildMiniStat('Busiest day', '$maxCount'),
-              ],
-            ),
-          ],
-        ),
-      ),
+
+                    if (provider.allContacts.isNotEmpty)
+                      Container(
+                        height: 50,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12.0,
+                        ),
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: provider.availableTags.length,
+                          itemBuilder: (context, index) {
+                            final tag =
+                                provider.availableTags[index];
+
+                            final isSelected =
+                                provider.selectedTag == tag;
+
+                            return Padding(
+                              padding: const EdgeInsets.only(
+                                right: 8.0,
+                              ),
+                              child: ChoiceChip(
+                                label: Text(tag),
+                                selected: isSelected,
+                                selectedColor:
+                                    Colors.blue.shade100,
+                                labelStyle: TextStyle(
+                                  color: isSelected
+                                      ? Colors.blue.shade900
+                                      : Colors.black87,
+                                ),
+                                onSelected: (selected) {
+                                  provider.setSelectedTag(
+                                    selected ? tag : 'All',
+                                  );
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+
+                    Expanded(
+                      child: provider.filteredContacts.isEmpty
+                          ? const Center(
+                              child: Text(
+                                "Contact not Found!",
+                              ),
+                            )
+                          : ListView.builder(
+                              padding:
+                                  const EdgeInsets.fromLTRB(
+                                0,
+                                0,
+                                0,
+                                100,
+                              ),
+                              itemCount:
+                                  provider.filteredContacts.length,
+                              itemBuilder: (context, index) {
+                                final contact =
+                                    provider.filteredContacts[index];
+
+                                final currentLetter =
+                                    contact.name.isNotEmpty
+                                        ? contact.name[0]
+                                            .toUpperCase()
+                                        : '?';
+
+                                final previousLetter =
+                                    index > 0
+                                        ? (provider
+                                                .filteredContacts[
+                                                    index - 1]
+                                                .name
+                                                .isNotEmpty
+                                            ? provider
+                                                .filteredContacts[
+                                                    index - 1]
+                                                .name[0]
+                                                .toUpperCase()
+                                            : '?')
+                                        : '';
+
+                                final bool showHeader =
+                                    currentLetter !=
+                                        previousLetter;
+
+                                return Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    if (showHeader) ...[
+                                      Padding(
+                                        padding:
+                                            const EdgeInsets.only(
+                                          left: 16.0,
+                                          right: 16.0,
+                                          top: 16.0,
+                                          bottom: 8.0,
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Text(
+                                              currentLetter,
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight:
+                                                    FontWeight.bold,
+                                                color: Colors
+                                                    .blue
+                                                    .shade800,
+                                              ),
+                                            ),
+                                            const SizedBox(
+                                              width: 12,
+                                            ),
+                                            Expanded(
+                                              child: Divider(
+                                                color: Colors
+                                                    .grey
+                                                    .shade300,
+                                                thickness: 1.5,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+
+                                    ContactCard(
+                                      contact: contact,
+                                      onReport: (reason) =>
+                                          _handleReport(
+                                        contact,
+                                        reason,
+                                      ),
+                                      onTap: () async {
+                                        await Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                ContactDetailScreen(
+                                              contact: contact,
+                                              currentUserId:
+                                                  widget.currentUserId,
+                                            ),
+                                          ),
+                                        );
+
+                                        if (mounted) {
+                                          Provider.of<
+                                              ContactProvider>(
+                                            context,
+                                            listen: false,
+                                          ).fetchContacts(
+                                            widget.currentUserId,
+                                          );
+                                        }
+                                      },
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+        );
+      },
     );
   }
+}
 
-  Widget _buildMiniStat(String label, String value) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        Text(
-          label,
-          style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-        ),
-      ],
-    );
-  }
+class PhoneInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    String digits =
+        newValue.text.replaceAll(RegExp(r'\D'), '');
 
-  Widget _buildError() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.cloud_off, size: 48, color: Colors.grey.shade500),
-            const SizedBox(height: 12),
-            Text(_error!, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            ElevatedButton(onPressed: _load, child: const Text('Retry')),
-          ],
-        ),
+    if (digits.isEmpty ||
+        digits == '62' ||
+        digits == '0') {
+      return const TextEditingValue(text: '');
+    }
+
+    if (digits.startsWith('0')) {
+      digits = '62${digits.substring(1)}';
+    } else if (!digits.startsWith('62')) {
+      digits = '62$digits';
+    }
+
+    String formatted = '+';
+
+    for (int i = 0; i < digits.length; i++) {
+      if (i == 2) {
+        formatted += ' ';
+      } else if (i == 5) {
+        formatted += '-';
+      } else if (i == 9) {
+        formatted += '-';
+      }
+
+      formatted += digits[i];
+    }
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(
+        offset: formatted.length,
       ),
     );
   }
