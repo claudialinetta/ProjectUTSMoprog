@@ -85,8 +85,11 @@ class _ContactScreenState extends State<ContactScreen> {
   }
 
   void _showAddContactForm(ContactProvider provider) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     showModalBottomSheet(
       context: context,
+      backgroundColor: isDark ? const Color(0xFF1E1E1E) : null,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
@@ -105,11 +108,12 @@ class _ContactScreenState extends State<ContactScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
+              Text(
                 'Add New Contact',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : null,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -117,9 +121,14 @@ class _ContactScreenState extends State<ContactScreen> {
               TextField(
                 controller: _nameController,
                 textCapitalization: TextCapitalization.words,
+                style: TextStyle(color: isDark ? Colors.white : null),
                 decoration: InputDecoration(
                   labelText: 'Name',
-                  prefixIcon: const Icon(Icons.person_outline),
+                  labelStyle: TextStyle(color: isDark ? Colors.grey.shade400 : null),
+                  prefixIcon: Icon(
+                    Icons.person_outline,
+                    color: isDark ? Colors.grey.shade400 : null,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -129,14 +138,20 @@ class _ContactScreenState extends State<ContactScreen> {
               TextField(
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
+                style: TextStyle(color: isDark ? Colors.white : null),
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,
                   PhoneInputFormatter(),
                 ],
                 decoration: InputDecoration(
                   labelText: 'Phone Number',
+                  labelStyle: TextStyle(color: isDark ? Colors.grey.shade400 : null),
                   hintText: '+62 812-3456-7890',
-                  prefixIcon: const Icon(Icons.phone_outlined),
+                  hintStyle: TextStyle(color: isDark ? Colors.grey.shade600 : null),
+                  prefixIcon: Icon(
+                    Icons.phone_outlined,
+                    color: isDark ? Colors.grey.shade400 : null,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -240,9 +255,12 @@ class _ContactScreenState extends State<ContactScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Consumer<ContactProvider>(
       builder: (context, provider, child) {
         return Scaffold(
+          backgroundColor: isDark ? const Color(0xFF121212) : null,
           appBar: AppBar(
             title: const Text("My Contacts"),
           ),
@@ -262,25 +280,30 @@ class _ContactScreenState extends State<ContactScreen> {
               : Column(
                   children: [
                     Container(
-                      color: Colors.white,
+                      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
                       padding: const EdgeInsets.all(12.0),
                       child: TextField(
                         controller: _searchController,
+                        style: TextStyle(color: isDark ? Colors.white : null),
                         onChanged: (value) {
                           provider.setSearchQuery(value);
                         },
                         decoration: InputDecoration(
-                          hintText:
-                              'Search by name or phone number...',
-                          prefixIcon: const Icon(Icons.search),
+                          hintText: 'Search by name or phone number...',
+                          hintStyle: TextStyle(
+                            color: isDark ? Colors.grey.shade500 : null,
+                          ),
+                          prefixIcon: Icon(
+                            Icons.search,
+                            color: isDark ? Colors.grey.shade400 : null,
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(30),
                             borderSide: BorderSide.none,
                           ),
                           filled: true,
-                          fillColor: Colors.grey.shade200,
-                          contentPadding:
-                              const EdgeInsets.symmetric(
+                          fillColor: isDark ? const Color(0xFF262626) : Colors.grey.shade200,
+                          contentPadding: const EdgeInsets.symmetric(
                             vertical: 0,
                           ),
                         ),
@@ -296,10 +319,8 @@ class _ContactScreenState extends State<ContactScreen> {
                           scrollDirection: Axis.horizontal,
                           itemCount: provider.availableTags.length,
                           itemBuilder: (context, index) {
-                            final tag =
-                                provider.availableTags[index];
-                            final isSelected =
-                                provider.selectedTag == tag;
+                            final tag = provider.availableTags[index];
+                            final isSelected = provider.selectedTag == tag;
 
                             return Padding(
                               padding: const EdgeInsets.only(
@@ -308,12 +329,13 @@ class _ContactScreenState extends State<ContactScreen> {
                               child: ChoiceChip(
                                 label: Text(tag),
                                 selected: isSelected,
-                                selectedColor:
-                                    Colors.blue.shade100,
+                                backgroundColor: isDark ? const Color(0xFF1E1E1E) : null,
+                                selectedColor: isDark ? Colors.blue.shade900 : Colors.blue.shade100,
+                                side: isDark ? const BorderSide(color: Color(0xFF2C2C2C)) : null,
                                 labelStyle: TextStyle(
                                   color: isSelected
-                                      ? Colors.blue.shade900
-                                      : Colors.black87,
+                                      ? (isDark ? Colors.blue.shade100 : Colors.blue.shade900)
+                                      : (isDark ? Colors.grey.shade300 : Colors.black87),
                                 ),
                                 onSelected: (selected) {
                                   provider.setSelectedTag(
@@ -327,58 +349,41 @@ class _ContactScreenState extends State<ContactScreen> {
                       ),
                     Expanded(
                       child: provider.filteredContacts.isEmpty
-                          ? const Center(
+                          ? Center(
                               child: Text(
                                 "Contact not Found!",
+                                style: TextStyle(color: isDark ? Colors.grey.shade400 : null),
                               ),
                             )
                           : ListView.builder(
-                              padding:
-                                  const EdgeInsets.fromLTRB(
+                              padding: const EdgeInsets.fromLTRB(
                                 0,
                                 0,
                                 0,
                                 100,
                               ),
-                              itemCount:
-                                  provider.filteredContacts.length,
+                              itemCount: provider.filteredContacts.length,
                               itemBuilder: (context, index) {
-                                final contact =
-                                    provider.filteredContacts[index];
+                                final contact = provider.filteredContacts[index];
 
-                                final currentLetter =
-                                    contact.name.isNotEmpty
-                                        ? contact.name[0]
-                                            .toUpperCase()
-                                        : '?';
+                                final currentLetter = contact.name.isNotEmpty
+                                    ? contact.name[0].toUpperCase()
+                                    : '?';
 
-                                final previousLetter =
-                                    index > 0
-                                        ? (provider
-                                                .filteredContacts[
-                                                    index - 1]
-                                                .name
-                                                .isNotEmpty
-                                            ? provider
-                                                .filteredContacts[
-                                                    index - 1]
-                                                .name[0]
-                                                .toUpperCase()
-                                            : '?')
-                                        : '';
+                                final previousLetter = index > 0
+                                    ? (provider.filteredContacts[index - 1].name.isNotEmpty
+                                        ? provider.filteredContacts[index - 1].name[0].toUpperCase()
+                                        : '?')
+                                    : '';
 
-                                final bool showHeader =
-                                    currentLetter !=
-                                        previousLetter;
+                                final bool showHeader = currentLetter != previousLetter;
 
                                 return Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     if (showHeader) ...[
                                       Padding(
-                                        padding:
-                                            const EdgeInsets.only(
+                                        padding: const EdgeInsets.only(
                                           left: 16.0,
                                           right: 16.0,
                                           top: 16.0,
@@ -390,11 +395,10 @@ class _ContactScreenState extends State<ContactScreen> {
                                               currentLetter,
                                               style: TextStyle(
                                                 fontSize: 16,
-                                                fontWeight:
-                                                    FontWeight.bold,
-                                                color: Colors
-                                                    .blue
-                                                    .shade800,
+                                                fontWeight: FontWeight.bold,
+                                                color: isDark
+                                                    ? Colors.blue.shade300
+                                                    : Colors.blue.shade800,
                                               ),
                                             ),
                                             const SizedBox(
@@ -402,9 +406,9 @@ class _ContactScreenState extends State<ContactScreen> {
                                             ),
                                             Expanded(
                                               child: Divider(
-                                                color: Colors
-                                                    .grey
-                                                    .shade300,
+                                                color: isDark
+                                                    ? const Color(0xFF2C2C2C)
+                                                    : Colors.grey.shade300,
                                                 thickness: 1.5,
                                               ),
                                             ),
@@ -414,8 +418,7 @@ class _ContactScreenState extends State<ContactScreen> {
                                     ],
                                     ContactCard(
                                       contact: contact,
-                                      onReport: (reason) =>
-                                          _handleReport(
+                                      onReport: (reason) => _handleReport(
                                         contact,
                                         reason,
                                       ),
@@ -423,19 +426,15 @@ class _ContactScreenState extends State<ContactScreen> {
                                         await Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (context) =>
-                                                ContactDetailScreen(
+                                            builder: (context) => ContactDetailScreen(
                                               contact: contact,
-                                              currentUserId:
-                                                  widget.currentUserId,
+                                              currentUserId: widget.currentUserId,
                                             ),
                                           ),
                                         );
 
                                         if (mounted) {
-                                          Provider.of<
-                                            ContactProvider
-                                          >(
+                                          Provider.of<ContactProvider>(
                                             context,
                                             listen: false,
                                           ).fetchContacts(
