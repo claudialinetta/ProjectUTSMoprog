@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'account_settings_screen.dart';
-import '../../theme/theme_manager.dart';
+import '../../providers/theme_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   final String userName;
@@ -19,27 +20,18 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  int _selectedThemeIndex = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    final currentTheme = ThemeManager.themeModeNotifier.value;
-    if (currentTheme == ThemeMode.dark) {
-      _selectedThemeIndex = 1;
-    } else {
-      _selectedThemeIndex = 0;
-    }
-  }
-
-  Widget _buildThemeButton(IconData icon, int index, bool isDark) {
-    final isSelected = _selectedThemeIndex == index;
-
+  Widget _buildThemeButton({
+    required IconData icon,
+    required int index,
+    required bool isSelected,
+    required bool isDark,
+  }) {
     return Expanded(
       child: GestureDetector(
         onTap: () {
-          setState(() => _selectedThemeIndex = index);
-          ThemeManager.changeTheme(index);
+          context.read<ThemeProvider>().setTheme(
+            index == 1 ? ThemeMode.dark : ThemeMode.light,
+          );
         },
         child: Container(
           margin: const EdgeInsets.all(4),
@@ -74,7 +66,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = context.watch<ThemeProvider>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final selectedThemeIndex = themeProvider.themeMode == ThemeMode.dark
+        ? 1
+        : (themeProvider.themeMode == ThemeMode.light ? 0 : (isDark ? 1 : 0));
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF4F6F9),
@@ -128,8 +125,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               child: Row(
                 children: [
-                  _buildThemeButton(Icons.wb_sunny_outlined, 0, isDark),
-                  _buildThemeButton(Icons.nightlight_outlined, 1, isDark),
+                  _buildThemeButton(
+                    icon: Icons.wb_sunny_outlined,
+                    index: 0,
+                    isSelected: selectedThemeIndex == 0,
+                    isDark: isDark,
+                  ),
+                  _buildThemeButton(
+                    icon: Icons.nightlight_outlined,
+                    index: 1,
+                    isSelected: selectedThemeIndex == 1,
+                    isDark: isDark,
+                  ),
                 ],
               ),
             ),

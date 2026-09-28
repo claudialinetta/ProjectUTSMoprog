@@ -1,7 +1,89 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:lorem_ipsum_generator/lorem_ipsum_generator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+class SummaryGenerator {
+  static final _random = Random();
+
+  static final Map<String, List<String>> _openings = {
+    'Default': [
+      "Based on recent network activity and community tags,",
+      "According to community interactions,",
+      "Looking across connected contact data,",
+    ],
+    'Friendly': [
+      "Good vibes incoming!",
+      "According to friends and inner circles,",
+      "Word around the chat is,",
+    ],
+    'Professional': [
+      "Across workplace networks and shared circles,",
+      "Reviewing collaborative records and feedback,",
+      "With a steady track record of clear communication,",
+    ],
+    'Humorous': [
+      "Fair warning before dialling:",
+      "According to classified sources (and noisy group chats),",
+      "Our casual radar just picked up that",
+    ],
+  };
+
+  static final Map<String, List<String>> _bodies = {
+    'Default': [
+      "{name} stands out as a genuine, highly reliable contact with a solid reputation.",
+      "{name} is recognized as an active and dependable presence that people frequently reach out to.",
+      "{name} consistently maintains positive, verified interactions across the community.",
+    ],
+    'Friendly': [
+      "{name} is that warm, go-to friend who lights up any conversation and never leaves you on read.",
+      "{name} is cherished for being thoughtful, super easy to talk to, and always up for catching up.",
+      "{name} radiates wholesome energy and makes everyone feel instantly welcome in the chat.",
+    ],
+    'Professional': [
+      "{name} demonstrates sharp focus, punctuality, and a proactive mindset that gets things done.",
+      "{name} is recognized for seamless coordination, articulate ideas, and dependable follow-throughs.",
+      "{name} brings exceptional clarity, integrity, and strong collaboration to every initiative.",
+    ],
+    'Humorous': [
+      "{name} is definitely the chief supplier of top-tier memes and chaos in every group chat.",
+      "a 'quick 5-minute call' with {name} has a 99% chance of turning into a full 2-hour podcast.",
+      "{name} will either reply within 0.2 seconds or take 3 business days—there is zero in between.",
+    ],
+  };
+
+  static final Map<String, List<String>> _closings = {
+    'Default': [
+      "A verified presence that brings instant confidence to any inbox.",
+      "Overall trust score looks rock-solid and steady.",
+      "Definitely a safe, highly respected number to have in your address book.",
+    ],
+    'Friendly': [
+      "No wonder this number is saved with so many sweet nicknames!",
+      "Basically the human equivalent of a warm cup of coffee.",
+      "A certified 10/10 companion to keep on your speed dial.",
+    ],
+    'Professional': [
+      "A valuable asset to have in any professional rolodex.",
+      "Consistently recommended as a dependable partner for impactful collaborations.",
+      "Setting a high benchmark for workplace synergy and communication.",
+    ],
+    'Humorous': [
+      "Proceed with caution: prolonged chats may cause uncontrollable laughing fits.",
+      "Passed the vibe check with flying colors. Dull moments? Non-existent.",
+      "Guaranteed to be saved under some utterly ridiculous nickname in someone's phone.",
+    ],
+  };
+
+  static String generate(String name, String tone) {
+    final validTone = _openings.containsKey(tone) ? tone : 'Default';
+    final open = _openings[validTone]![_random.nextInt(_openings[validTone]!.length)];
+    final body = _bodies[validTone]![_random.nextInt(_bodies[validTone]!.length)].replaceAll('{name}', name);
+    final close = _closings[validTone]![_random.nextInt(_closings[validTone]!.length)];
+
+    return "$open $body $close";
+  }
+}
 
 class ProfileSummaryScreen extends StatefulWidget {
   final String userName;
@@ -84,7 +166,7 @@ class _ProfileSummaryScreenState extends State<ProfileSummaryScreen> {
         await asyncPrefs.setString('generatedText_${widget.userId}', _generatedText);
         await asyncPrefs.setStringList('currentTags_${widget.userId}', _currentTags);
       } else if (!savedIsGenerated) {
-         setState(() => _isLoading = false);
+        setState(() => _isLoading = false);
       }
     } catch (e) {
       debugPrint('Gagal sinkronisasi dari Supabase: $e');
@@ -99,7 +181,7 @@ class _ProfileSummaryScreenState extends State<ProfileSummaryScreen> {
     availableTags.shuffle();
     final newTags = availableTags.take(3).toList();
     
-    final newText = LoremIpsumGenerator.generate(words: 70);
+    final newText = SummaryGenerator.generate(widget.userName, _selectedTone);
 
     setState(() {
       _currentTags = newTags;
@@ -122,9 +204,11 @@ class _ProfileSummaryScreenState extends State<ProfileSummaryScreen> {
       });
     } catch (e) {
       debugPrint('Failed to save to Supabase: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Saved locally, but failed to sync to cloud.')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Saved locally, but failed to sync to cloud.')),
+        );
+      }
     }
     
     setState(() => _isLoading = false);
@@ -178,7 +262,7 @@ class _ProfileSummaryScreenState extends State<ProfileSummaryScreen> {
           style: TextStyle(
             color: textColor,
             fontSize: 18,
-            fontWeight: FontWeight.bold
+            fontWeight: FontWeight.bold,
           ),
         ),
         centerTitle: true,
@@ -198,13 +282,16 @@ class _ProfileSummaryScreenState extends State<ProfileSummaryScreen> {
 
   Widget _buildSelectionView(Color cardColor, Color textColor, bool isDark) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(
-          'What tone would you like the profile summary to be generated in?',
-          style: TextStyle(
-            fontSize: 16,
-            color: isDark ? Colors.grey.shade400 : Colors.grey.shade700
+        Center(
+          child: Text(
+            'What tone would you like the profile summary to be generated in?',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 15,
+              color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
+            ),
           ),
         ),
         const SizedBox(height: 24),
@@ -244,7 +331,7 @@ class _ProfileSummaryScreenState extends State<ProfileSummaryScreen> {
                           style: TextStyle(
                             fontSize: 16,
                             color: textColor,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                           ),
                         ),
                       ),
@@ -270,8 +357,8 @@ class _ProfileSummaryScreenState extends State<ProfileSummaryScreen> {
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.white,
-                fontWeight: FontWeight.bold
-              )
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ),
@@ -306,7 +393,7 @@ class _ProfileSummaryScreenState extends State<ProfileSummaryScreen> {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: textColor
+                          color: textColor,
                         ),
                       ),
                       const Spacer(),
@@ -318,7 +405,7 @@ class _ProfileSummaryScreenState extends State<ProfileSummaryScreen> {
                     children: List.generate(_currentTags.length, (index) {
                       return Padding(
                         padding: const EdgeInsets.only(right: 8.0),
-                        child: _buildTag(_currentTags[index], _tagColors[index]),
+                        child: _buildTag(_currentTags[index], _tagColors[index % _tagColors.length]),
                       );
                     }),
                   ),
@@ -328,7 +415,7 @@ class _ProfileSummaryScreenState extends State<ProfileSummaryScreen> {
                     style: TextStyle(
                       fontSize: 15,
                       color: isDark ? Colors.grey.shade300 : Colors.grey.shade800,
-                      height: 1.5
+                      height: 1.5,
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -336,15 +423,15 @@ class _ProfileSummaryScreenState extends State<ProfileSummaryScreen> {
                     children: [
                       Icon(
                         Icons.thumb_up_off_alt,
-                        color: isDark ? Colors.grey.shade500 : Colors.grey
+                        color: isDark ? Colors.grey.shade500 : Colors.grey,
                       ),
                       const SizedBox(width: 16),
                       Icon(
                         Icons.thumb_down_off_alt,
-                        color: isDark ? Colors.grey.shade500 : Colors.grey
+                        color: isDark ? Colors.grey.shade500 : Colors.grey,
                       ),
                     ],
-                  )
+                  ),
                 ],
               ),
             ),
@@ -367,22 +454,22 @@ class _ProfileSummaryScreenState extends State<ProfileSummaryScreen> {
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.redAccent,
-                    fontWeight: FontWeight.bold
-                  )
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
             const SizedBox(height: 12),
             Text(
-              '*This profile summary is generated by artificial intelligence and is not intended to be precise.',
+              '*This profile summary is generated by author team and is not intended to be precise.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 11,
-                color: isDark ? Colors.grey.shade500 : Colors.grey
+                color: isDark ? Colors.grey.shade500 : Colors.grey,
               ),
-            )
+            ),
           ],
-        )
+        ),
       ],
     );
   }
@@ -399,7 +486,7 @@ class _ProfileSummaryScreenState extends State<ProfileSummaryScreen> {
         style: const TextStyle(
           color: Colors.white,
           fontSize: 12,
-          fontWeight: FontWeight.bold
+          fontWeight: FontWeight.bold,
         ),
       ),
     );
