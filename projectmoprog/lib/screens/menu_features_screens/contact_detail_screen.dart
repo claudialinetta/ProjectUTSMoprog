@@ -30,11 +30,6 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
     super.initState();
     _currentContact = widget.contact;
 
-    print('OPENING CONTACT DETAIL');
-    print('currentUserId: ${widget.currentUserId}');
-    print('contact: ${_currentContact.name}');
-    print('phone: ${_currentContact.phoneNumber}');
-
     _recordCallHistory();
     _recordCheck();
   }
@@ -52,16 +47,20 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
     );
   }
 
-  void _recordCheck() {
+  Future<void> _recordCheck() async {
     final c = widget.contact;
-    final isSpam = c.reportCount >= 10 || c.tag == 'Spam Likely';
 
-    CallHistoryService().recordCheck(
-      ownerId: widget.currentUserId,
-      name: c.name,
-      phoneNumber: c.phoneNumber,
-      status: isSpam ? CallStatus.spam : CallStatus.fromTag(c.tag),
-    );
+    try {
+      await _supabase.from('number_checks').insert({
+        'owner_id': widget.currentUserId,
+        'name': c.name,
+        'phone_number': c.phoneNumber,
+        'phone_key': c.phoneNumber.replaceAll(RegExp(r'\D'), ''),
+        'checked_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('Failed to log number check: $e');
+    }
   }
 
   Future<void> _deleteContact() async {
