@@ -130,4 +130,29 @@ class CallHistoryService {
   Future<void> clearAll(String ownerId) async {
     await _db.from(_table).delete().eq('owner_id', ownerId);
   }
+
+  Future<void> recordCheck({
+    required String ownerId,
+    required String name,
+    required String phoneNumber,
+    required CallStatus status,
+  }) async {
+    await record(
+      ownerId: ownerId,
+      name: name,
+      phoneNumber: phoneNumber,
+      status: status,
+      type: CallType.searched,
+    );
+
+    try {
+      await _db.from('check_events').insert({
+        'owner_id': ownerId,
+        'name': name,
+        'phone_number': phoneNumber,
+      });
+    } catch (e) {
+      debugPrint('Failed to log check event: $e');
+    }
+  }
 }

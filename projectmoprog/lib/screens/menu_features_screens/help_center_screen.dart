@@ -17,7 +17,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
 
   List<FaqItem> _allItems = [];
   String _query = '';
-  FaqCategory? _selectedCategory; // null = "All"
+  FaqCategory? _selectedCategory;
   bool _isLoading = true;
   String? _error;
 
@@ -291,7 +291,6 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
   }
 }
 
-/// Bottom sheet form: subject, category, description -> saved to Supabase.
 class _ContactSupportSheet extends StatefulWidget {
   const _ContactSupportSheet();
 

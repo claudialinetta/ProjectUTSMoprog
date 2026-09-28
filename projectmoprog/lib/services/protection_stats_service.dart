@@ -1,7 +1,9 @@
-import 'package:projectmoprog/models/call_history_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../models/call_history_model.dart';
 import '../models/protection_stats.dart';
+
+import 'package:flutter/foundation.dart';
 
 class ProtectionStatsService {
   final SupabaseClient _db = Supabase.instance.client;
@@ -19,13 +21,13 @@ class ProtectionStatsService {
         .eq('status', 'spam');
 
     var reportsCount = 0;
-
     try {
       reportsCount = await _db
           .from('contact_reports')
           .count(CountOption.exact)
           .eq('owner_id', ownerId);
     } catch (e) {
+      debugPrint('Failed to count reports: $e');
       reportsCount = 0;
     }
 
@@ -36,18 +38,49 @@ class ProtectionStatsService {
     );
   }
 
-  Future<List<ProtectionActivity>> getRecentActivity(String ownerId) async {
+  Future<List<CheckEntry>> getCheckedHistory(String ownerId) async {
+    final rows = await _db
+        .from('number_checks')
+        .select()
+        .eq('owner_id', ownerId)
+        .order('checked_at', ascending: false)
+        .limit(30);
+
+    return rows
+        .map<CheckEntry>(
+          (row) => CheckEntry.fromMap(Map<String, dynamic>.from(row)),
+        )
+        .toList();
+  }
+
+  Future<List<CallHistoryModel>> getSpamHistory(String ownerId) async {
+    final rows = await _db
+        .from('call_history')
+        .select()
+        .eq('owner_id', ownerId)
+        .eq('status', 'spam')
+        .order('happened_at', ascending: false)
+        .limit(30);
+
+    return rows
+        .map<CallHistoryModel>(
+          (row) => CallHistoryModel.fromMap(Map<String, dynamic>.from(row)),
+        )
+        .toList();
+  }
+
+  Future<List<ReportHistoryEntry>> getReportHistory(String ownerId) async {
     try {
       final rows = await _db
-          .from('notifications')
+          .from('contact_reports')
           .select()
           .eq('owner_id', ownerId)
           .order('created_at', ascending: false)
-          .limit(5);
+          .limit(30);
 
       return rows
-          .map<ProtectionActivity>(
-            (row) => ProtectionActivity.fromMap(Map<String, dynamic>.from(row)),
+          .map<ReportHistoryEntry>(
+            (row) => ReportHistoryEntry.fromMap(Map<String, dynamic>.from(row)),
           )
           .toList();
     } catch (e) {
@@ -55,37 +88,31 @@ class ProtectionStatsService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> getRecentChecks(
-    String ownerId, {
-    int limit = 10,
-  }) async {
-    final response = await _db
+  Future<List<DailyActivity>> getWeeklyActivity(String ownerId) async {
+    final today = DateTime.now();
+    final since = DateTime(
+      today.year,
+      today.month,
+      today.day,
+    ).subtract(const Duration(days: 6));
+
+    final rows = await _db
         .from('number_checks')
-        .select()
+        .select('checked_at')
         .eq('owner_id', ownerId)
-        .order('checked_at', ascending: false)
-        .limit(limit);
+        .gte('checked_at', since.toUtc().toIso8601String());
 
-    return response
-        .map<Map<String, dynamic>>((row) => Map<String, dynamic>.from(row))
-        .toList();
-  }
+    final counts = <String, int>{};
+    for (final row in rows) {
+      final dt = DateTime.parse(row['checked_at'].toString()).toLocal();
+      final key = '${dt.year}-${dt.month}-${dt.day}';
+      counts[key] = (counts[key] ?? 0) + 1;
+    }
 
-  Future<List<CallHistoryModel>> getRecentCalls(
-    String ownerId, {
-    int limit = 10,
-  }) async {
-    final response = await _db
-        .from('call_history')
-        .select()
-        .eq('owner_id', ownerId)
-        .order('happened_at', ascending: false)
-        .limit(limit);
-
-    return response
-        .map<CallHistoryModel>(
-          (row) => CallHistoryModel.fromMap(Map<String, dynamic>.from(row)),
-        )
-        .toList();
+    return List.generate(7, (i) {
+      final day = since.add(Duration(days: i));
+      final key = '${day.year}-${day.month}-${day.day}';
+      return DailyActivity(day: day, count: counts[key] ?? 0);
+    });
   }
 }
