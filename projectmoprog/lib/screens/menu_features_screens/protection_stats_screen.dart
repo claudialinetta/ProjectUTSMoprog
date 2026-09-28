@@ -1,521 +1,506 @@
 import 'package:flutter/material.dart';
-import 'package:projectmoprog/services/protection_stats_service.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
-import '../../models/protection_stats.dart';
-import '../../models/call_history_model.dart';
+import '../../models/contact_model.dart';
+import '../../services/contact_service.dart';
+import '../../widgets/contact_card.dart';
+import 'contact_detail_screen.dart';
+import '../../providers/contact_provider.dart';
 
-class ProtectionStatsScreen extends StatefulWidget {
-  final String ownerId;
+class ContactScreen extends StatefulWidget {
+  final String currentUserId;
 
-  const ProtectionStatsScreen({super.key, required this.ownerId});
+  const ContactScreen({super.key, required this.currentUserId});
 
   @override
-  State<ProtectionStatsScreen> createState() => _ProtectionStatsScreenState();
+  State<ContactScreen> createState() => _ContactScreenState();
 }
 
-class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
-  final ProtectionStatsService _service = ProtectionStatsService();
+class _ContactScreenState extends State<ContactScreen> {
+  final ContactService _service = ContactService();
 
-  ProtectionStats _stats = const ProtectionStats.empty();
-
-  List<ProtectionActivity> _activity = [];
-  List<CallHistoryModel> _recentCalls = [];
-
-  bool _isLoading = true;
-  bool _showRecentActivity = false;
-
-  String? _error;
+  final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _load();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<ContactProvider>(
+        context,
+        listen: false,
+      ).fetchContacts(widget.currentUserId);
+    });
   }
 
-  Future<void> _load() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
+  Future<void> _saveNewContact(
+    BuildContext bottomSheetContext,
+    ContactProvider provider,
+  ) async {
+    final name = _nameController.text.trim();
+    final phone = _phoneController.text.trim();
+
+    if (name.isEmpty || phone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Name and Phone Number cannot be empty.'),
+        ),
+      );
+      return;
+    }
+
+    Navigator.pop(bottomSheetContext);
 
     try {
-      final stats = await _service.getStats(widget.ownerId);
-      final recentChecks = await _service.getRecentChecks(widget.ownerId);
-      final recentCalls = await _service.getRecentCalls(widget.ownerId);
+      await provider.addContact(
+        widget.currentUserId,
+        name,
+        phone,
+      );
 
-      if (!mounted) return;
+      _nameController.clear();
+      _phoneController.clear();
 
-      setState(() {
-        _stats = stats;
-
-        _activity = recentChecks.map((item) {
-          final checkedAt = DateTime.parse(item['checked_at'].toString());
-
-          return ProtectionActivity(
-            message: '${item['name']} (${item['phone_number']})',
-            createdAt: checkedAt,
-          );
-        }).toList();
-
-        _recentCalls = recentCalls;
-
-        _isLoading = false;
-      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Contact added successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
     } catch (e) {
-      if (!mounted) return;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to add contact: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
+  }
 
-      debugPrint('Failed to load protection stats: $e');
+  void _showAddContactForm(ContactProvider provider) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(16),
+        ),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 24,
+            right: 24,
+            top: 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Add New Contact',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: _nameController,
+                textCapitalization: TextCapitalization.words,
+                decoration: InputDecoration(
+                  labelText: 'Name',
+                  prefixIcon: const Icon(Icons.person_outline),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  PhoneInputFormatter(),
+                ],
+                decoration: InputDecoration(
+                  labelText: 'Phone Number',
+                  hintText: '+62 812-3456-7890',
+                  prefixIcon: const Icon(Icons.phone_outlined),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  backgroundColor: Colors.blue.shade600,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () => _saveNewContact(
+                  context,
+                  provider,
+                ),
+                child: const Text(
+                  'Save Contact',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _handleReport(
+    ContactModel contact,
+    String reason,
+  ) async {
+    try {
+      final success = await _service.reportContact(
+        contactId: contact.id,
+        currentCount: contact.reportCount,
+        reporterId: widget.currentUserId,
+        reason: reason,
+        contactName: contact.name,
+        phoneNumber: contact.phoneNumber,
+      );
+
+      if (!success) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              "You've already reported this contact.",
+            ),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
 
       setState(() {
-        _isLoading = false;
-        _error =
-            'Failed to load your stats.\n'
-            'Check your internet connection.';
+        contact.reportCount += 1;
       });
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "${contact.phoneNumber} was reported as '$reason'",
+          ),
+          backgroundColor: Colors.redAccent,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Report failed: $e');
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Report failed: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 6),
+        ),
+      );
     }
   }
 
   @override
+  void dispose() {
+    _searchController.dispose();
+    _nameController.dispose();
+    _phoneController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Protection Stats')),
-      body: _buildBody(),
-    );
-  }
-
-  Widget _buildBody() {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (_error != null) {
-      return _buildError();
-    }
-
-    return RefreshIndicator(
-      onRefresh: _load,
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _buildIntro(),
-
-          const SizedBox(height: 20),
-
-          _buildNumbersCheckedCard(),
-
-          const SizedBox(height: 12),
-
-          _buildStatCard(
-            icon: Icons.shield_outlined,
-            color: Colors.red,
-            label: 'Spam Avoided',
-            value: _stats.spamAvoided,
-            description:
-                'Numbers flagged as spam before you had to find out yourself.',
+    return Consumer<ContactProvider>(
+      builder: (context, provider, child) {
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text("My Contacts"),
           ),
-
-          const SizedBox(height: 12),
-
-          _buildStatCard(
-            icon: Icons.flag_outlined,
-            color: Colors.orange,
-            label: 'Reports Given',
-            value: _stats.reportsGiven,
-            description: 'Reports you contributed to help protect other users.',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildIntro() {
-    return const Text(
-      'Here is how you have been protected and how you have helped '
-      'protect others.',
-      style: TextStyle(color: Colors.black54),
-    );
-  }
-
-  Widget _buildNumbersCheckedCard() {
-    final activities = _buildCombinedActivities();
-
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CircleAvatar(
-                  radius: 24,
-                  backgroundColor: Colors.blue.withValues(alpha: 0.15),
-                  child: const Icon(Icons.search, color: Colors.blue),
-                ),
-
-                const SizedBox(width: 14),
-
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${_stats.numbersChecked}',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const Text(
-                        'Numbers Checked',
-                        style: TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Numbers you have searched or checked through this app.',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+          floatingActionButton: FloatingActionButton(
+            onPressed: () => _showAddContactForm(provider),
+            backgroundColor: Colors.blue.shade600,
+            tooltip: 'Add Contact',
+            child: const Icon(
+              Icons.add,
+              color: Colors.white,
             ),
           ),
-
-          if (activities.isNotEmpty) ...[
-            const Divider(height: 1, indent: 16, endIndent: 16),
-
-            InkWell(
-              onTap: () {
-                setState(() {
-                  _showRecentActivity = !_showRecentActivity;
-                });
-              },
-              borderRadius: const BorderRadius.vertical(
-                bottom: Radius.circular(14),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                child: Row(
+          body: provider.isLoading
+              ? const Center(
+                  child: CircularProgressIndicator(),
+                )
+              : Column(
                   children: [
-                    Icon(Icons.history, size: 20, color: Colors.grey.shade700),
-
-                    const SizedBox(width: 10),
-
-                    const Expanded(
-                      child: Text(
-                        'Recent Activity',
-                        style: TextStyle(fontWeight: FontWeight.w600),
+                    Container(
+                      color: Colors.white,
+                      padding: const EdgeInsets.all(12.0),
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: (value) {
+                          provider.setSearchQuery(value);
+                        },
+                        decoration: InputDecoration(
+                          hintText:
+                              'Search by name or phone number...',
+                          prefixIcon: const Icon(Icons.search),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: BorderSide.none,
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey.shade200,
+                          contentPadding:
+                              const EdgeInsets.symmetric(
+                            vertical: 0,
+                          ),
+                        ),
                       ),
                     ),
 
-                    Icon(
-                      _showRecentActivity
-                          ? Icons.keyboard_arrow_up
-                          : Icons.keyboard_arrow_down,
-                      color: Colors.grey.shade700,
+                    if (provider.allContacts.isNotEmpty)
+                      Container(
+                        height: 50,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12.0,
+                        ),
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: provider.availableTags.length,
+                          itemBuilder: (context, index) {
+                            final tag =
+                                provider.availableTags[index];
+
+                            final isSelected =
+                                provider.selectedTag == tag;
+
+                            return Padding(
+                              padding: const EdgeInsets.only(
+                                right: 8.0,
+                              ),
+                              child: ChoiceChip(
+                                label: Text(tag),
+                                selected: isSelected,
+                                selectedColor:
+                                    Colors.blue.shade100,
+                                labelStyle: TextStyle(
+                                  color: isSelected
+                                      ? Colors.blue.shade900
+                                      : Colors.black87,
+                                ),
+                                onSelected: (selected) {
+                                  provider.setSelectedTag(
+                                    selected ? tag : 'All',
+                                  );
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+
+                    Expanded(
+                      child: provider.filteredContacts.isEmpty
+                          ? const Center(
+                              child: Text(
+                                "Contact not Found!",
+                              ),
+                            )
+                          : ListView.builder(
+                              padding:
+                                  const EdgeInsets.fromLTRB(
+                                0,
+                                0,
+                                0,
+                                100,
+                              ),
+                              itemCount:
+                                  provider.filteredContacts.length,
+                              itemBuilder: (context, index) {
+                                final contact =
+                                    provider.filteredContacts[index];
+
+                                final currentLetter =
+                                    contact.name.isNotEmpty
+                                        ? contact.name[0]
+                                            .toUpperCase()
+                                        : '?';
+
+                                final previousLetter =
+                                    index > 0
+                                        ? (provider
+                                                .filteredContacts[
+                                                    index - 1]
+                                                .name
+                                                .isNotEmpty
+                                            ? provider
+                                                .filteredContacts[
+                                                    index - 1]
+                                                .name[0]
+                                                .toUpperCase()
+                                            : '?')
+                                        : '';
+
+                                final bool showHeader =
+                                    currentLetter !=
+                                        previousLetter;
+
+                                return Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    if (showHeader) ...[
+                                      Padding(
+                                        padding:
+                                            const EdgeInsets.only(
+                                          left: 16.0,
+                                          right: 16.0,
+                                          top: 16.0,
+                                          bottom: 8.0,
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Text(
+                                              currentLetter,
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight:
+                                                    FontWeight.bold,
+                                                color: Colors
+                                                    .blue
+                                                    .shade800,
+                                              ),
+                                            ),
+                                            const SizedBox(
+                                              width: 12,
+                                            ),
+                                            Expanded(
+                                              child: Divider(
+                                                color: Colors
+                                                    .grey
+                                                    .shade300,
+                                                thickness: 1.5,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+
+                                    ContactCard(
+                                      contact: contact,
+                                      onReport: (reason) =>
+                                          _handleReport(
+                                        contact,
+                                        reason,
+                                      ),
+                                      onTap: () async {
+                                        await Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                ContactDetailScreen(
+                                              contact: contact,
+                                              currentUserId:
+                                                  widget.currentUserId,
+                                            ),
+                                          ),
+                                        );
+
+                                        if (mounted) {
+                                          Provider.of<
+                                              ContactProvider>(
+                                            context,
+                                            listen: false,
+                                          ).fetchContacts(
+                                            widget.currentUserId,
+                                          );
+                                        }
+                                      },
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
                     ),
                   ],
                 ),
-              ),
-            ),
-
-            if (_showRecentActivity) _buildActivityList(activities),
-          ],
-        ],
-      ),
-    );
-  }
-
-  List<_ActivityItem> _buildCombinedActivities() {
-    final List<_ActivityItem> activities = [];
-
-    for (final activity in _activity) {
-      activities.add(
-        _ActivityItem(
-          name: activity.message,
-          subtitle: 'Number checked',
-          date: activity.createdAt,
-          icon: Icons.search,
-          iconColor: Colors.blue,
-        ),
-      );
-    }
-
-    for (final call in _recentCalls) {
-      activities.add(
-        _ActivityItem(
-          name: '${call.name} (${call.phoneNumber})',
-          subtitle: _getCallTypeLabel(call.type),
-          date: call.happenedAt,
-          icon: _getCallIcon(call.type),
-          iconColor: _getCallIconColor(call.type),
-        ),
-      );
-    }
-
-    activities.sort((a, b) => b.date.compareTo(a.date));
-
-    return activities.take(10).toList();
-  }
-
-  Widget _buildActivityList(List<_ActivityItem> activities) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
-      child: Column(
-        children: activities.asMap().entries.map((entry) {
-          final index = entry.key;
-          final activity = entry.value;
-
-          return _buildActivityItem(
-            activity,
-            isLast: index == activities.length - 1,
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildActivityItem(_ActivityItem activity, {required bool isLast}) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 36,
-          child: Column(
-            children: [
-              CircleAvatar(
-                radius: 17,
-                backgroundColor: activity.iconColor.withValues(alpha: 0.12),
-                child: Icon(activity.icon, size: 17, color: activity.iconColor),
-              ),
-
-              if (!isLast)
-                Container(width: 1, height: 34, color: Colors.grey.shade300),
-            ],
-          ),
-        ),
-
-        const SizedBox(width: 12),
-
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.only(top: 2, bottom: 14),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        activity.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-
-                      const SizedBox(height: 2),
-
-                      Text(
-                        activity.subtitle,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(width: 8),
-
-                Text(
-                  _formatRelativeTime(activity.date),
-                  style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatCard({
-    required IconData icon,
-    required Color color,
-    required String label,
-    required int value,
-    required String description,
-  }) {
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            CircleAvatar(
-              radius: 24,
-              backgroundColor: color.withValues(alpha: 0.15),
-              child: Icon(icon, color: color),
-            ),
-
-            const SizedBox(width: 14),
-
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '$value',
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
-                  Text(
-                    label,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-
-                  const SizedBox(height: 4),
-
-                  Text(
-                    description,
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  IconData _getCallIcon(CallType type) {
-    switch (type) {
-      case CallType.incoming:
-        return Icons.call_received;
-
-      case CallType.outgoing:
-        return Icons.call_made;
-
-      case CallType.missed:
-        return Icons.call_missed;
-
-      case CallType.searched:
-        return Icons.search;
-    }
-  }
-
-  Color _getCallIconColor(CallType type) {
-    switch (type) {
-      case CallType.incoming:
-        return Colors.green;
-
-      case CallType.outgoing:
-        return Colors.blue;
-
-      case CallType.missed:
-        return Colors.red;
-
-      case CallType.searched:
-        return Colors.blue;
-    }
-  }
-
-  String _getCallTypeLabel(CallType type) {
-    switch (type) {
-      case CallType.incoming:
-        return 'Incoming call';
-
-      case CallType.outgoing:
-        return 'Outgoing call';
-
-      case CallType.missed:
-        return 'Missed call';
-
-      case CallType.searched:
-        return 'Searched';
-    }
-  }
-
-  String _formatRelativeTime(DateTime date) {
-    final difference = DateTime.now().difference(date.toLocal());
-
-    if (difference.inSeconds < 60) {
-      return 'Just now';
-    }
-
-    if (difference.inMinutes < 60) {
-      return '${difference.inMinutes}m ago';
-    }
-
-    if (difference.inHours < 24) {
-      return '${difference.inHours}h ago';
-    }
-
-    if (difference.inDays < 7) {
-      return '${difference.inDays}d ago';
-    }
-
-    final local = date.toLocal();
-
-    return '${local.day.toString().padLeft(2, '0')}/'
-        '${local.month.toString().padLeft(2, '0')}';
-  }
-
-  Widget _buildError() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.cloud_off, size: 48, color: Colors.grey.shade500),
-
-            const SizedBox(height: 12),
-
-            Text(_error!, textAlign: TextAlign.center),
-
-            const SizedBox(height: 16),
-
-            ElevatedButton(onPressed: _load, child: const Text('Retry')),
-          ],
-        ),
-      ),
+        );
+      },
     );
   }
 }
 
-class _ActivityItem {
-  final String name;
-  final String subtitle;
-  final DateTime date;
-  final IconData icon;
-  final Color iconColor;
+class PhoneInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    String digits =
+        newValue.text.replaceAll(RegExp(r'\D'), '');
 
-  const _ActivityItem({
-    required this.name,
-    required this.subtitle,
-    required this.date,
-    required this.icon,
-    required this.iconColor,
-  });
+    if (digits.isEmpty ||
+        digits == '62' ||
+        digits == '0') {
+      return const TextEditingValue(text: '');
+    }
+
+    if (digits.startsWith('0')) {
+      digits = '62${digits.substring(1)}';
+    } else if (!digits.startsWith('62')) {
+      digits = '62$digits';
+    }
+
+    String formatted = '+';
+
+    for (int i = 0; i < digits.length; i++) {
+      if (i == 2) {
+        formatted += ' ';
+      } else if (i == 5) {
+        formatted += '-';
+      } else if (i == 9) {
+        formatted += '-';
+      }
+
+      formatted += digits[i];
+    }
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(
+        offset: formatted.length,
+      ),
+    );
+  }
 }

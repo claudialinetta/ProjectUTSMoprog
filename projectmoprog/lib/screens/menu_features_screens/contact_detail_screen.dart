@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:projectmoprog/models/contact_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../services/number_check_service.dart';
 import '../chat_screens/chat_screen.dart';
+import '../../models/call_history_model.dart';
+import '../../services/call_history_service.dart';
 
 class ContactDetailScreen extends StatefulWidget {
   final ContactModel contact;
@@ -34,21 +35,33 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
     print('contact: ${_currentContact.name}');
     print('phone: ${_currentContact.phoneNumber}');
 
+    _recordCallHistory();
     _recordCheck();
   }
 
-  Future<void> _recordCheck() async {
-    try {
-      await NumberCheckService().record(
-        ownerId: widget.currentUserId,
-        name: _currentContact.name,
-        phoneNumber: _currentContact.phoneNumber,
-      );
+  void _recordCallHistory() {
+    final c = widget.contact;
+    final isSpam = c.reportCount >= 10 || c.tag == 'Spam Likely';
 
-      print('CHECK SUCCESS');
-    } catch (e) {
-      print('CHECK FAILED: $e');
-    }
+    CallHistoryService().record(
+      ownerId: widget.currentUserId,
+      name: c.name,
+      phoneNumber: c.phoneNumber,
+      status: isSpam ? CallStatus.spam : CallStatus.fromTag(c.tag),
+      type: CallType.searched,
+    );
+  }
+
+  void _recordCheck() {
+    final c = widget.contact;
+    final isSpam = c.reportCount >= 10 || c.tag == 'Spam Likely';
+
+    CallHistoryService().recordCheck(
+      ownerId: widget.currentUserId,
+      name: c.name,
+      phoneNumber: c.phoneNumber,
+      status: isSpam ? CallStatus.spam : CallStatus.fromTag(c.tag),
+    );
   }
 
   Future<void> _deleteContact() async {
