@@ -240,6 +240,9 @@ class _ContactScreenState extends State<ContactScreen> {
         contactId: contact.id,
         currentCount: contact.reportCount,
         reporterId: widget.currentUserId,
+        reason: reason,
+        contactName: contact.name,
+        phoneNumber: contact.phoneNumber,
       );
 
       if (!success) {
@@ -264,13 +267,13 @@ class _ContactScreenState extends State<ContactScreen> {
         ),
       );
     } catch (e) {
+      debugPrint('Report failed: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            "Failed to report the contact. Please check your internet connection.",
-          ),
+        SnackBar(
+          content: Text('Report failed: $e'),
           backgroundColor: Colors.red,
+          duration: const Duration(seconds: 6),
         ),
       );
     }
