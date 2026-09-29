@@ -358,6 +358,7 @@ class ContactCard extends StatelessWidget {
       color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       elevation: 0.5,
+      clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
         side: BorderSide(

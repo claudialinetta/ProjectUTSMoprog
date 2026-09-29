@@ -38,20 +38,30 @@ class CallHistoryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    
     final statusColor = _statusColor();
     final isSpam = item.status == CallStatus.spam;
+    
     final typeColor = item.type == CallType.missed
-        ? Colors.red
-        : Colors.grey.shade600;
+        ? (isDark ? Colors.red.shade400 : Colors.red)
+        : (isDark ? Colors.grey.shade400 : Colors.grey.shade600);
+
+    final Color? cardColor = isDark
+        ? (isSpam ? Colors.red.withValues(alpha: 0.1) : const Color(0xFF1E1E1E))
+        : null;
+
+    final Color borderColor = isSpam
+        ? (isDark ? Colors.red.shade800 : Colors.red.shade200)
+        : (isDark ? const Color(0xFF2C2C2C) : Colors.transparent);
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      elevation: 1,
+      elevation: isDark ? 0 : 1,
+      color: cardColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: BorderSide(
-          color: isSpam ? Colors.red.shade200 : Colors.transparent,
-        ),
+        side: BorderSide(color: borderColor),
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.all(12),
@@ -65,12 +75,20 @@ class CallHistoryTile extends StatelessWidget {
         ),
         title: Text(
           item.name,
-          style: const TextStyle(fontWeight: FontWeight.w600),
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            color: isDark ? Colors.white : null,
+          ),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(item.phoneNumber),
+            Text(
+              item.phoneNumber,
+              style: TextStyle(
+                color: isDark ? Colors.grey.shade400 : null,
+              ),
+            ),
             const SizedBox(height: 4),
             Row(
               children: [

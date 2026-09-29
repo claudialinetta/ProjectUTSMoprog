@@ -106,17 +106,27 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
   }
 
   Future<void> _confirmClearAll() async {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Clear all history?'),
-        content: const Text(
+        backgroundColor: isDark ? const Color(0xFF1E1E1E) : null,
+        title: Text(
+          'Clear all history?',
+          style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+        ),
+        content: Text(
           'All your history will be deleted and cannot be restored.',
+          style: TextStyle(color: isDark ? Colors.grey.shade300 : Colors.black87),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.blue),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
@@ -162,8 +172,11 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
   }
 
   void _showOptions(CallHistoryModel item) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     showModalBottomSheet(
       context: context,
+      backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -172,15 +185,19 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
                 child: Text(
                   'Calling Option',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 16, 
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
                 ),
               ),
-              const Divider(),
+              Divider(color: isDark ? const Color(0xFF2C2C2C) : null),
               if (item.isUnknownCaller)
                 if (item.status == CallStatus.spam)
                     ListTile(
@@ -207,11 +224,12 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
                     },
                   )
               else
-                const Padding(
-                  padding: EdgeInsets.all(24.0),
+                Padding(
+                  padding: const EdgeInsets.all(24.0),
                   child: Text(
                     'This contact is already been saved by you.',
                     textAlign: TextAlign.center,
+                    style: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.black87),
                   ),
                 ),
             ],
@@ -223,9 +241,18 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF121212) : null,
       appBar: AppBar(
-        title: const Text('Call History'),
+        title: Text(
+          'Call History',
+          style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+        ),
+        backgroundColor: isDark ? const Color(0xFF121212) : null,
+        iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black87),
+        actionsIconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black87),
         actions: [
           if (_all.isNotEmpty)
             IconButton(
@@ -254,20 +281,29 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
   }
 
   Widget _buildSearchField() {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.all(12),
       child: TextField(
         controller: _searchController,
+        style: TextStyle(color: isDark ? Colors.white : Colors.black87),
         onChanged: (value) => setState(() => _query = value),
         decoration: InputDecoration(
           hintText: 'Search name or number in history...',
-          prefixIcon: const Icon(Icons.search),
+          hintStyle: TextStyle(
+            color: isDark ? Colors.grey.shade500 : Colors.grey.shade600,
+          ),
+          prefixIcon: Icon(
+            Icons.search,
+            color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(30),
             borderSide: BorderSide.none,
           ),
           filled: true,
-          fillColor: Colors.grey.shade200,
+          fillColor: isDark ? const Color(0xFF262626) : Colors.grey.shade200,
           contentPadding: const EdgeInsets.symmetric(vertical: 0),
         ),
       ),
@@ -275,6 +311,7 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
   }
 
   Widget _buildFilterChips() {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final options = <CallStatus?>[null, ...CallStatus.values];
 
     return SizedBox(
@@ -290,11 +327,19 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
               ? _all.length
               : _all.where((item) => item.status == option).length;
           final label = option == null ? 'All' : option.label;
+          final isSelected = _filter == option;
 
           return ChoiceChip(
             label: Text('$label ($count)'),
-            selected: _filter == option,
+            labelStyle: TextStyle(
+              color: isSelected 
+                  ? (isDark ? Colors.white : Colors.black87)
+                  : (isDark ? Colors.grey.shade300 : Colors.black87),
+            ),
+            selected: isSelected,
             onSelected: (_) => setState(() => _filter = option),
+            backgroundColor: isDark ? const Color(0xFF1E1E1E) : null,
+            selectedColor: isDark ? Colors.blue.shade700 : null,
           );
         },
       ),
@@ -302,13 +347,14 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
   }
 
   Widget _buildList() {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final items = _visibleItems;
 
     if (items.isEmpty) {
       return Center(
         child: Text(
           _all.isEmpty ? 'No history yet' : 'History not found',
-          style: TextStyle(color: Colors.grey.shade600),
+          style: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.grey.shade600),
         ),
       );
     }
@@ -384,6 +430,8 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
   }
 
   Widget _buildDateHeader(String label) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 2),
       child: Text(
@@ -391,7 +439,7 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
         style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w600,
-          color: Colors.grey.shade600,
+          color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
         ),
       ),
     );
@@ -411,15 +459,25 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
   }
 
   Widget _buildError() {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.cloud_off, size: 48, color: Colors.grey.shade500),
+            Icon(
+              Icons.cloud_off, 
+              size: 48, 
+              color: isDark ? Colors.grey.shade400 : Colors.grey.shade500,
+            ),
             const SizedBox(height: 12),
-            Text(_error!, textAlign: TextAlign.center),
+            Text(
+              _error!, 
+              textAlign: TextAlign.center,
+              style: TextStyle(color: isDark ? Colors.grey.shade300 : Colors.black87),
+            ),
             const SizedBox(height: 16),
             ElevatedButton(onPressed: _load, child: const Text('Try again')),
           ],

@@ -83,7 +83,7 @@ class _MenuScreenState extends State<MenuScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF4F6F9),
+      backgroundColor: isDark ? const Color(0xFF121212) : Colors.grey.shade100,
       body: SafeArea(
         top: true,
         child: ListView(

@@ -83,8 +83,19 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Help Center')),
+      backgroundColor: isDark ? const Color(0xFF121212) : null,
+      appBar: AppBar(
+        title: Text(
+          'Help Center',
+          style: TextStyle(color: isDark ? Colors.white : null),
+        ),
+        backgroundColor: isDark ? const Color(0xFF121212) : null,
+        iconTheme: IconThemeData(color: isDark ? Colors.white : null),
+        scrolledUnderElevation: 0,
+      ),
       body: _buildBody(),
     );
   }
@@ -107,20 +118,29 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
   }
 
   Widget _buildSearchField() {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
       child: TextField(
         controller: _searchController,
+        style: TextStyle(color: isDark ? Colors.white : Colors.black87),
         onChanged: (value) => setState(() => _query = value),
         decoration: InputDecoration(
           hintText: 'Search a question...',
-          prefixIcon: const Icon(Icons.search),
+          hintStyle: TextStyle(
+            color: isDark ? Colors.grey.shade500 : null,
+          ),
+          prefixIcon: Icon(
+            Icons.search,
+            color: isDark ? Colors.grey.shade400 : null,
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(30),
             borderSide: BorderSide.none,
           ),
           filled: true,
-          fillColor: Colors.grey.shade200,
+          fillColor: isDark ? const Color(0xFF262626) : Colors.grey.shade200,
           contentPadding: const EdgeInsets.symmetric(vertical: 0),
         ),
       ),
@@ -159,12 +179,21 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
     required bool selected,
     required VoidCallback onTap,
   }) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: ChoiceChip(
         label: Text(label),
+        labelStyle: TextStyle(
+          color: selected 
+              ? (isDark ? Colors.white : Colors.black87)
+              : (isDark ? Colors.grey.shade300 : Colors.black87),
+        ),
         selected: selected,
         onSelected: (_) => onTap(),
+        backgroundColor: isDark ? const Color(0xFF1E1E1E) : null,
+        selectedColor: isDark ? Colors.blue.shade700 : null,
       ),
     );
   }
@@ -182,6 +211,8 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
   }
 
   Widget _buildCategorySection(FaqCategory category, List<FaqItem> items) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -192,7 +223,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: Colors.grey.shade600,
+              color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
             ),
           ),
         ),
@@ -202,21 +233,41 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
   }
 
   Widget _buildFaqTile(FaqItem item) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      elevation: 0.5,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: isDark ? 0 : 0.5,
+      clipBehavior: Clip.antiAlias,
+      color: isDark ? const Color(0xFF1E1E1E) : null,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: isDark ? const Color(0xFF2C2C2C) : Colors.transparent,
+        ),
+      ),
       child: ExpansionTile(
+        shape: const Border(),
+        collapsedShape: const Border(),
+        collapsedIconColor: isDark ? Colors.grey.shade400 : null,
+        iconColor: isDark ? Colors.white : null,
         title: Text(
           item.question,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+          style: TextStyle(
+            fontWeight: FontWeight.w600, 
+            fontSize: 14,
+            color: isDark ? Colors.white : null,
+          ),
         ),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         expandedCrossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             item.answer,
-            style: TextStyle(color: Colors.grey.shade700, height: 1.4),
+            style: TextStyle(
+              color: isDark ? Colors.grey.shade400 : Colors.grey.shade700, 
+              height: 1.4,
+            ),
           ),
         ],
       ),
@@ -224,15 +275,24 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
   }
 
   Widget _buildEmptyState() {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.help_outline, size: 48, color: Colors.grey.shade400),
+            Icon(
+              Icons.help_outline, 
+              size: 48, 
+              color: isDark ? Colors.grey.shade600 : Colors.grey.shade400,
+            ),
             const SizedBox(height: 12),
-            const Text('No matching questions found'),
+            Text(
+              'No matching questions found',
+              style: TextStyle(color: isDark ? Colors.grey.shade300 : null),
+            ),
             const SizedBox(height: 16),
             _buildContactSupportSection(),
           ],
@@ -242,15 +302,25 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
   }
 
   Widget _buildError() {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.cloud_off, size: 48, color: Colors.grey.shade500),
+            Icon(
+              Icons.cloud_off, 
+              size: 48, 
+              color: isDark ? Colors.grey.shade600 : Colors.grey.shade500,
+            ),
             const SizedBox(height: 12),
-            Text(_error!, textAlign: TextAlign.center),
+            Text(
+              _error!, 
+              textAlign: TextAlign.center,
+              style: TextStyle(color: isDark ? Colors.grey.shade300 : null),
+            ),
             const SizedBox(height: 16),
             ElevatedButton(onPressed: _load, child: const Text('Retry')),
           ],
@@ -260,13 +330,17 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
   }
 
   Widget _buildContactSupportSection() {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
       child: Column(
         children: [
           Text(
             "Can't find what you're looking for?",
-            style: TextStyle(color: Colors.grey.shade600),
+            style: TextStyle(
+              color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+            ),
           ),
           const SizedBox(height: 8),
           OutlinedButton.icon(
@@ -280,9 +354,12 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
   }
 
   void _openContactSupportSheet(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -340,6 +417,8 @@ class _ContactSupportSheetState extends State<_ContactSupportSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Padding(
       padding: EdgeInsets.fromLTRB(
         20,
@@ -353,21 +432,37 @@ class _ContactSupportSheetState extends State<_ContactSupportSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Contact Support',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 18, 
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : null,
+              ),
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _subjectController,
-              decoration: const InputDecoration(labelText: 'Subject'),
+              style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+              decoration: InputDecoration(
+                labelText: 'Subject',
+                labelStyle: TextStyle(color: isDark ? Colors.grey.shade400 : null),
+              ),
               validator: (v) =>
                   (v == null || v.trim().isEmpty) ? 'Required' : null,
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<FaqCategory>(
               initialValue: _category,
-              decoration: const InputDecoration(labelText: 'Category'),
+              dropdownColor: isDark ? const Color(0xFF262626) : null,
+              style: TextStyle(
+                color: isDark ? Colors.white : Colors.black87,
+                fontSize: 16,
+              ),
+              decoration: InputDecoration(
+                labelText: 'Category',
+                labelStyle: TextStyle(color: isDark ? Colors.grey.shade400 : null),
+              ),
               items: FaqCategory.values
                   .map((c) => DropdownMenuItem(value: c, child: Text(c.label)))
                   .toList(),
@@ -376,7 +471,11 @@ class _ContactSupportSheetState extends State<_ContactSupportSheet> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _descriptionController,
-              decoration: const InputDecoration(labelText: 'Description'),
+              style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+              decoration: InputDecoration(
+                labelText: 'Description',
+                labelStyle: TextStyle(color: isDark ? Colors.grey.shade400 : null),
+              ),
               maxLines: 4,
               validator: (v) =>
                   (v == null || v.trim().isEmpty) ? 'Required' : null,
