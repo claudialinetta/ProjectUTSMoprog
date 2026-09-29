@@ -1,4 +1,5 @@
 import 'contact_tag.dart';
+import 'dart:convert';
 
 enum CallStatus {
   trusted('Trusted'),
@@ -69,7 +70,17 @@ class CallHistoryModel {
   }
 
   factory CallHistoryModel.fromMap(Map<String, dynamic> map) {
-    final tagsData = map['tags'] as List<dynamic>? ?? [];
+    List<dynamic> tagsData = [];
+    if (map['tags'] != null) {
+      if (map['tags'] is List) {
+        tagsData = map['tags'] as List<dynamic>;
+      } else if (map['tags'] is String && map['tags'].toString().isNotEmpty) {
+        try {
+          tagsData = jsonDecode(map['tags']);
+        } catch (_) {}
+      }
+    }
+    
     final parsedTags = tagsData
         .map((e) => ContactTag.fromJson(Map<String, dynamic>.from(e)))
         .toList();

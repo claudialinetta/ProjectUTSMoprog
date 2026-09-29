@@ -65,6 +65,55 @@ class ContactService {
     return savedNames.toSet().toList();
   }
 
+  Future<List<Map<String, dynamic>>> getRecentChats(String currentUserId) async {
+    try {
+      final messagesResponse = await _supabase
+        .from('messages')
+        .select()
+        .or('senderId.eq.$currentUserId,receiverId.eq.$currentUserId')
+        .order('createdAt', ascending: false);
+
+      final contactsResponse = await _supabase
+        .from('contacts')
+        .select()
+        .eq('ownerId', currentUserId);
+
+      List<Map<String, dynamic>> recentChats = [];
+      Set<String> processedContactIds = {};
+
+      for (var message in messagesResponse) {
+        String otherUserId = message['senderId'] == currentUserId
+          ? message['receiverId']
+          : message['senderId'];
+
+        if (!processedContactIds.contains(otherUserId)) {
+          processedContactIds.add(otherUserId);
+          
+          final matchedContact = contactsResponse.firstWhere(
+            (c) => c['phoneNumber'].toString() == otherUserId.toString(),
+            orElse: () => {
+              'id': 0,
+              'name': otherUserId,
+              'phoneNumber': otherUserId,
+              'avatarInitial': '?',
+            },
+          );
+
+          recentChats.add({
+            'text': message['content'], 
+            'timestamp': message['createdAt'],
+            'contacts': matchedContact, 
+          });
+        }
+      }
+      
+      return recentChats;
+
+    } catch (e) {
+      throw Exception('Failed to load recent chats: $e');
+    }
+  }
+
   Future<void> checkNewJoinedContacts(String currentUserId) async {
     try {
       final contacts = await getContacts(currentUserId);
