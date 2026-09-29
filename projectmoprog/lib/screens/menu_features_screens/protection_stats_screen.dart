@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../models/call_history_model.dart';
 import '../../models/protection_stats.dart';
 import '../../services/protection_stats_service.dart';
 
@@ -17,7 +16,7 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
 
   ProtectionStats _stats = const ProtectionStats.empty();
   List<CheckEntry> _checkedHistory = [];
-  List<CallHistoryModel> _spamHistory = [];
+  List<CheckEntry> _spamHistory = [];
   List<ReportHistoryEntry> _reportHistory = [];
   List<DailyActivity> _weeklyActivity = [];
   bool _isLoading = true;
@@ -48,7 +47,7 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
       setState(() {
         _stats = results[0] as ProtectionStats;
         _checkedHistory = results[1] as List<CheckEntry>;
-        _spamHistory = results[2] as List<CallHistoryModel>;
+        _spamHistory = results[2] as List<CheckEntry>;
         _reportHistory = results[3] as List<ReportHistoryEntry>;
         _weeklyActivity = results[4] as List<DailyActivity>;
         _isLoading = false;
@@ -132,7 +131,7 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
                     color: Colors.red,
                     title: item.name,
                     subtitle:
-                        '${item.phoneNumber} • ${_relativeTime(item.happenedAt)}',
+                        '${item.phoneNumber} • ${_relativeTime(item.checkedAt)}',
                   ),
                 )
                 .toList(),

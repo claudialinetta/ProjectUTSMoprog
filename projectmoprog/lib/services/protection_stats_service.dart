@@ -1,6 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../models/call_history_model.dart';
 import '../models/protection_stats.dart';
 
 import 'package:flutter/foundation.dart';
@@ -15,10 +14,10 @@ class ProtectionStatsService {
         .eq('owner_id', ownerId);
 
     final spamCount = await _db
-        .from('call_history')
+        .from('number_checks')
         .count(CountOption.exact)
         .eq('owner_id', ownerId)
-        .eq('status', 'spam');
+        .eq('is_spam', true);
 
     var reportsCount = 0;
     try {
@@ -53,18 +52,18 @@ class ProtectionStatsService {
         .toList();
   }
 
-  Future<List<CallHistoryModel>> getSpamHistory(String ownerId) async {
+  Future<List<CheckEntry>> getSpamHistory(String ownerId) async {
     final rows = await _db
-        .from('call_history')
+        .from('number_checks')
         .select()
         .eq('owner_id', ownerId)
-        .eq('status', 'spam')
-        .order('happened_at', ascending: false)
-        .limit(30);
+        .eq('is_spam', true)
+        .order('checked_at', ascending: false)
+        .limit(10);
 
     return rows
-        .map<CallHistoryModel>(
-          (row) => CallHistoryModel.fromMap(Map<String, dynamic>.from(row)),
+        .map<CheckEntry>(
+          (row) => CheckEntry.fromMap(Map<String, dynamic>.from(row)),
         )
         .toList();
   }
