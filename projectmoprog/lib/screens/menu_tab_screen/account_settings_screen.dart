@@ -157,17 +157,10 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
-            ),
-            child: Icon(
-              Icons.arrow_back_ios_new, 
-              color: isDark ? Colors.white : Colors.black87, 
-              size: 16,
-            ),
+          icon: Icon(
+            Icons.arrow_back_ios_new, 
+            color: isDark ? Colors.white : Colors.black87, 
+            size: 16,
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -195,29 +188,36 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: isDark ? Colors.blue.withValues(alpha: 0.15) : Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.camera_alt, 
-                    color: isDark ? Colors.blue.shade300 : Colors.blue, 
-                    size: 18,
+            Material(
+              color: isDark ? Colors.blue.withValues(alpha: 0.15) : Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(20),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: () {
+                },
+                hoverColor: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.blue.shade100,
+                splashColor: isDark ? Colors.white.withValues(alpha: 0.12) : Colors.blue.shade200,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.camera_alt, 
+                        color: isDark ? Colors.blue.shade300 : Colors.blue, 
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Add a Profile Photo',
+                        style: TextStyle(
+                          color: isDark ? Colors.blue.shade300 : Colors.blue.shade700, 
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Add a Profile Photo',
-                    style: TextStyle(
-                      color: isDark ? Colors.blue.shade300 : Colors.blue.shade700, 
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
             const SizedBox(height: 32),

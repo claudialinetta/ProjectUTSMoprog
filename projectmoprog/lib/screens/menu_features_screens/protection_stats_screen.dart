@@ -94,9 +94,19 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(title: const Text('Protection Stats')),
+      backgroundColor: isDark ? const Color(0xFF121212) : Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: Text(
+          'Protection Stats',
+          style: TextStyle(color: isDark ? Colors.white : null),
+        ),
+        backgroundColor: isDark ? const Color(0xFF121212) : null,
+        iconTheme: IconThemeData(color: isDark ? Colors.white : null),
+        scrolledUnderElevation: 0,
+      ),
       body: _buildBody(),
     );
   }
@@ -169,21 +179,33 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
   }
 
   Widget _buildIntro() {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Text(
       'Here is how you have been protected and how you have helped '
       'protect others.',
       style: TextStyle(
-        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+        color: isDark 
+            ? Colors.grey.shade400 
+            : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
       ),
     );
   }
 
   Widget _buildNumbersCheckedCard() {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final activities = _buildCombinedActivities();
 
     return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      elevation: isDark ? 0 : 1,
+      clipBehavior: Clip.antiAlias,
+      color: isDark ? const Color(0xFF1E1E1E) : null,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(
+          color: isDark ? const Color(0xFF2C2C2C) : Colors.transparent,
+        ),
+      ),
       child: Column(
         children: [
           Padding(
@@ -203,21 +225,25 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
                     children: [
                       Text(
                         '${_stats.numbersChecked}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : null,
                         ),
                       ),
-                      const Text(
+                      Text(
                         'Numbers Checked',
-                        style: TextStyle(fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white : null,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'Numbers you have searched or checked through this app.',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey.shade600,
+                          color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                         ),
                       ),
                     ],
@@ -228,7 +254,12 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
           ),
 
           if (activities.isNotEmpty) ...[
-            const Divider(height: 1, indent: 16, endIndent: 16),
+            Divider(
+              height: 1, 
+              indent: 16, 
+              endIndent: 16, 
+              color: isDark ? const Color(0xFF2C2C2C) : null,
+            ),
 
             InkWell(
               onTap: () {
@@ -243,19 +274,26 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.history, size: 20, color: Colors.grey.shade700),
+                    Icon(
+                      Icons.history, 
+                      size: 20, 
+                      color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
+                    ),
                     const SizedBox(width: 10),
-                    const Expanded(
+                    Expanded(
                       child: Text(
                         'Recent Activity',
-                        style: TextStyle(fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white : null,
+                        ),
                       ),
                     ),
                     Icon(
                       _showRecentActivity
                           ? Icons.keyboard_arrow_up
                           : Icons.keyboard_arrow_down,
-                      color: Colors.grey.shade700,
+                      color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
                     ),
                   ],
                 ),
@@ -270,6 +308,8 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
   }
 
   Widget _buildInsightsCard() {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     final activeDays = _insights['activeDays'] ?? 0;
     final busiestDay = _insights['busiestDay'];
     final busiestDayCount = _insights['busiestDayCount'] ?? 0;
@@ -279,8 +319,15 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
     final mostCheckedCount = _insights['mostCheckedCount'] ?? 0;
 
     return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      elevation: isDark ? 0 : 1,
+      clipBehavior: Clip.antiAlias,
+      color: isDark ? const Color(0xFF1E1E1E) : null,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(
+          color: isDark ? const Color(0xFF2C2C2C) : Colors.transparent,
+        ),
+      ),
       child: Column(
         children: [
           InkWell(
@@ -307,11 +354,12 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Protection Insights',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : null,
                           ),
                         ),
                         const SizedBox(height: 3),
@@ -319,8 +367,9 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
                           'See your checking activity and patterns.',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Theme.of(context).colorScheme.onSurface
-                                .withValues(alpha: 0.65),
+                            color: isDark 
+                                ? Colors.grey.shade400 
+                                : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.65),
                           ),
                         ),
                       ],
@@ -330,7 +379,7 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
                     _showInsights
                         ? Icons.keyboard_arrow_up
                         : Icons.keyboard_arrow_down,
-                    color: Colors.grey.shade700,
+                    color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
                   ),
                 ],
               ),
@@ -338,7 +387,12 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
           ),
 
           if (_showInsights) ...[
-            const Divider(height: 1, indent: 16, endIndent: 16),
+            Divider(
+              height: 1, 
+              indent: 16, 
+              endIndent: 16,
+              color: isDark ? const Color(0xFF2C2C2C) : null,
+            ),
 
             Padding(
               padding: const EdgeInsets.all(16),
@@ -405,13 +459,14 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .surfaceContainerHighest,
+                        color: isDark 
+                            ? const Color(0xFF262626) 
+                            : Theme.of(context).colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: Theme.of(context).colorScheme.outline
-                              .withValues(alpha: 0.25),
+                          color: isDark 
+                              ? const Color(0xFF333333) 
+                              : Theme.of(context).colorScheme.outline.withValues(alpha: 0.25),
                         ),
                       ),
                       child: Row(
@@ -430,8 +485,9 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
                                   mostCheckedName,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.w600,
+                                    color: isDark ? Colors.white : null,
                                   ),
                                 ),
                                 const SizedBox(height: 2),
@@ -439,7 +495,7 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
                                   'Most frequently checked number',
                                   style: TextStyle(
                                     fontSize: 11,
-                                    color: Colors.grey.shade600,
+                                    color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                                   ),
                                 ),
                               ],
@@ -459,20 +515,25 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
   }
 
   Widget _buildCheckChart() {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     if (_checkActivity.isEmpty) {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          color: isDark 
+              ? const Color(0xFF262626) 
+              : Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Center(
           child: Text(
             'No checking activity in the last 7 days.',
             style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface
-                  .withValues(alpha: 0.6),
+              color: isDark 
+                  ? Colors.grey.shade400 
+                  : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
             ),
           ),
         ),
@@ -487,15 +548,21 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
       children: [
         Row(
           children: [
-            const Expanded(
+            Expanded(
               child: Text(
                 'Check Activity',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : null,
+                ),
               ),
             ),
             Text(
               'Last 7 days',
-              style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+              style: TextStyle(
+                fontSize: 11, 
+                color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+              ),
             ),
           ],
         ),
@@ -522,9 +589,10 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
                     children: [
                       Text(
                         '$count',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white : null,
                         ),
                       ),
                       const SizedBox(height: 5),
@@ -542,7 +610,7 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
                         _dayLabel(date),
                         style: TextStyle(
                           fontSize: 10,
-                          color: Colors.grey.shade600,
+                          color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                         ),
                       ),
                     ],
@@ -564,24 +632,27 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
   }) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final bool isDark = theme.brightness == Brightness.dark;
 
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: colors.surfaceContainerHighest,
+        color: isDark ? const Color(0xFF262626) : colors.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colors.outline.withValues(alpha: 0.25)),
+        border: Border.all(
+          color: isDark ? const Color(0xFF333333) : colors.outline.withValues(alpha: 0.25),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 18, color: Colors.blue.shade700),
+          Icon(icon, size: 18, color: isDark ? Colors.blue.shade400 : Colors.blue.shade700),
           const SizedBox(height: 8),
           Text(
             title,
             style: TextStyle(
               fontSize: 11,
-              color: colors.onSurface.withValues(alpha: 0.65),
+              color: isDark ? Colors.grey.shade400 : colors.onSurface.withValues(alpha: 0.65),
             ),
           ),
           const SizedBox(height: 3),
@@ -589,14 +660,18 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 15, 
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white : null,
+            ),
           ),
           const SizedBox(height: 2),
           Text(
             subtitle,
             style: TextStyle(
               fontSize: 10,
-              color: colors.onSurface.withValues(alpha: 0.5),
+              color: isDark ? Colors.grey.shade500 : colors.onSurface.withValues(alpha: 0.5),
             ),
           ),
         ],
@@ -654,6 +729,8 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
   }
 
   Widget _buildActivityItem(_ActivityItem activity, {required bool isLast}) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -667,7 +744,11 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
                 child: Icon(activity.icon, size: 17, color: activity.iconColor),
               ),
               if (!isLast)
-                Container(width: 1, height: 34, color: Colors.grey.shade300),
+                Container(
+                  width: 1, 
+                  height: 34, 
+                  color: isDark ? const Color(0xFF2C2C2C) : Colors.grey.shade300,
+                ),
             ],
           ),
         ),
@@ -688,9 +769,10 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
                         activity.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
+                          color: isDark ? Colors.white : null,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -698,7 +780,7 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
                         activity.subtitle,
                         style: TextStyle(
                           fontSize: 11,
-                          color: Colors.grey.shade600,
+                          color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                         ),
                       ),
                     ],
@@ -709,7 +791,10 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
 
                 Text(
                   _formatRelativeTime(activity.date),
-                  style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
+                  style: TextStyle(
+                    fontSize: 10, 
+                    color: isDark ? Colors.grey.shade500 : Colors.grey.shade500,
+                  ),
                 ),
               ],
             ),
@@ -727,12 +812,23 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
     required String description,
     required List<Widget> children,
   }) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Card(
-      elevation: 1,
-      color: Theme.of(context).cardColor,
+      elevation: isDark ? 0 : 1,
       clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      color: isDark ? const Color(0xFF1E1E1E) : Theme.of(context).cardColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(
+          color: isDark ? const Color(0xFF2C2C2C) : Colors.transparent,
+        ),
+      ),
       child: ExpansionTile(
+        shape: const Border(),
+        collapsedShape: const Border(),
+        collapsedIconColor: isDark ? Colors.grey.shade400 : null,
+        iconColor: isDark ? Colors.white : null,
         tilePadding: const EdgeInsets.all(16),
         leading: CircleAvatar(
           radius: 24,
@@ -741,18 +837,29 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
         ),
         title: Text(
           '$value',
-          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 24, 
+            fontWeight: FontWeight.bold,
+            color: isDark ? Colors.white : null,
+          ),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+            Text(
+              label, 
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : null,
+              ),
+            ),
             Text(
               description,
               style: TextStyle(
                 fontSize: 12,
-                color: Theme.of(context).colorScheme.onSurface
-                    .withValues(alpha: 0.65),
+                color: isDark 
+                    ? Colors.grey.shade400 
+                    : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.65),
               ),
             ),
           ],
@@ -763,7 +870,9 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
                   padding: const EdgeInsets.all(16),
                   child: Text(
                     'No activity yet',
-                    style: TextStyle(color: Colors.grey.shade500),
+                    style: TextStyle(
+                      color: isDark ? Colors.grey.shade400 : Colors.grey.shade500,
+                    ),
                   ),
                 ),
               ]
@@ -778,16 +887,25 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
     required String title,
     required String subtitle,
   }) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return ListTile(
       dense: true,
       leading: Icon(icon, size: 18, color: color),
       title: Text(
         title,
-        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+        style: TextStyle(
+          fontSize: 13, 
+          fontWeight: FontWeight.w600,
+          color: isDark ? Colors.white : null,
+        ),
       ),
       subtitle: Text(
         subtitle,
-        style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+        style: TextStyle(
+          fontSize: 11, 
+          color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+        ),
       ),
     );
   }
@@ -868,18 +986,25 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
   }
 
   Widget _buildError() {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.cloud_off, size: 48, color: Colors.grey.shade500),
-
+            Icon(
+              Icons.cloud_off, 
+              size: 48, 
+              color: isDark ? Colors.grey.shade400 : Colors.grey.shade500,
+            ),
             const SizedBox(height: 12),
-
-            Text(_error!, textAlign: TextAlign.center),
-
+            Text(
+              _error!, 
+              textAlign: TextAlign.center,
+              style: TextStyle(color: isDark ? Colors.grey.shade300 : null),
+            ),
             const SizedBox(height: 16),
 
             ElevatedButton(onPressed: _load, child: const Text('Retry')),
