@@ -15,14 +15,12 @@ class MenuGroupCard extends StatelessWidget {
         color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         border: Border.symmetric(
           horizontal: BorderSide(
-            color: isDark ? const Color(0xFF2C2C2C) : const Color(0xFFE9ECEF), 
+            color: isDark ? const Color(0xFF2C2C2C) : const Color(0xFFE9ECEF),
             width: 0.8,
           ),
         ),
       ),
-      child: Column(
-        children: children,
-      ),
+      child: Column(children: children),
     );
   }
 }
@@ -49,14 +47,21 @@ class MenuItemTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Menyiapkan warna dinamis
     final bgColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
-    final iconBgColor = isDark ? Colors.blue.withValues(alpha: 0.15) : const Color(0xFFEDF4FF);
+    final iconBgColor = isDark
+        ? Colors.blue.withValues(alpha: 0.15)
+        : const Color(0xFFEDF4FF);
     final iconColor = isDark ? Colors.blue : const Color(0xFF007AFF);
     final titleColor = isDark ? Colors.white : const Color(0xFF1E293B);
-    final subtitleColor = isDark ? Colors.grey.shade400 : const Color(0xFF8A94A6);
-    final trailingColor = isDark ? Colors.grey.shade600 : const Color(0xFFCBD5E1);
-    final dividerColor = isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF1F5F9);
+    final subtitleColor = isDark
+        ? Colors.grey.shade400
+        : const Color(0xFF8A94A6);
+    final trailingColor = isDark
+        ? Colors.grey.shade600
+        : const Color(0xFFCBD5E1);
+    final dividerColor = isDark
+        ? const Color(0xFF2C2C2C)
+        : const Color(0xFFF1F5F9);
 
     return Column(
       children: [
@@ -65,7 +70,10 @@ class MenuItemTile extends StatelessWidget {
           child: InkWell(
             onTap: onTap,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 12.0,
+              ),
               child: Row(
                 children: [
                   Container(
@@ -108,19 +116,19 @@ class MenuItemTile extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
 
-                  trailing ?? Icon(Icons.chevron_right_rounded, color: trailingColor, size: 22),
+                  trailing ??
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        color: trailingColor,
+                        size: 22,
+                      ),
                 ],
               ),
             ),
           ),
         ),
         if (showDivider)
-          Divider(
-            height: 1,
-            thickness: 0.6,
-            indent: 74, 
-            color: dividerColor,
-          ),
+          Divider(height: 1, thickness: 0.6, indent: 74, color: dividerColor),
       ],
     );
   }
@@ -147,7 +155,9 @@ class SimpleMenuTile extends StatelessWidget {
     final bgColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
     final iconColor = isDark ? Colors.blue : const Color(0xFF007AFF);
     final titleColor = isDark ? Colors.white : const Color(0xFF1E293B);
-    final dividerColor = isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF1F5F9);
+    final dividerColor = isDark
+        ? const Color(0xFF2C2C2C)
+        : const Color(0xFFF1F5F9);
 
     return Column(
       children: [
@@ -156,7 +166,10 @@ class SimpleMenuTile extends StatelessWidget {
           child: InkWell(
             onTap: onTap,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 14.0,
+              ),
               child: Row(
                 children: [
                   Icon(icon, color: iconColor, size: 24),
@@ -177,12 +190,7 @@ class SimpleMenuTile extends StatelessWidget {
           ),
         ),
         if (showDivider)
-          Divider(
-            height: 1,
-            thickness: 0.6,
-            indent: 56, 
-            color: dividerColor,
-          ),
+          Divider(height: 1, thickness: 0.6, indent: 56, color: dividerColor),
       ],
     );
   }

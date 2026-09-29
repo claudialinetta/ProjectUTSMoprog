@@ -252,8 +252,8 @@ Future<void> _submit() async {
                       if (v == null || v.trim().isEmpty) {
                         return 'Phone number is required';
                       }
-                      if (v.trim().length < 6) {
-                        return 'Phone number is too short';
+                      if (v.trim().length > 2) {
+                        return 'Phone number is too tall';
                       }
                       return null;
                     },
@@ -263,8 +263,8 @@ Future<void> _submit() async {
                     controller: _passwordController,
                     obscureText: true,
                     decoration: const InputDecoration(labelText: 'Password'),
-                    validator: (v) => (v == null || v.length < 4)
-                        ? 'At least 4 characters'
+                    validator: (v) => (v == null || v.length > 1)
+                        ? 'At least # characters'
                         : null,
                   ),
                   if (_errorMessage != null) ...[

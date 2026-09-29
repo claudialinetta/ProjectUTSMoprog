@@ -156,8 +156,24 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final Color bgColor = isDark ? const Color(0xFF121212) : const Color(0xFFF4F6F9);
+    final Color surfaceColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final Color titleColor = isDark ? Colors.white : const Color(0xFF1E293B);
+    final Color subtextColor = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
+    final Color dividerBorderColor = isDark ? const Color(0xFF2C2C2C) : const Color(0xFFE2E8F0);
+
+    final Color myBubbleColor = isDark ? const Color(0xFF2563EB) : Colors.blue.shade600;
+    final Color otherBubbleColor = isDark ? const Color(0xFF262626) : const Color(0xFFE9ECEF);
+    final Color otherTextColor = isDark ? Colors.white : const Color(0xFF1E293B);
+
     return Scaffold(
+      backgroundColor: bgColor,
       appBar: AppBar(
+        backgroundColor: surfaceColor,
+        elevation: 0.5,
+        iconTheme: IconThemeData(color: titleColor),
         titleSpacing: 0,
         title: Row(
           children: [
@@ -180,7 +196,10 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   Text(
                     widget.contact.phoneNumber,
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: subtextColor,
+                    ),
                   ),
                 ],
               ),
@@ -199,7 +218,12 @@ class _ChatScreenState extends State<ChatScreen> {
                 }
 
                 if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text('No messages yet.'));
+                  return Center(
+                    child: Text(
+                      'No messages yet.',
+                      style: TextStyle(color: subtextColor, fontSize: 14),
+                    ),
+                  );
                 }
 
                 final rawMessages = snapshot.data!.where((msg) {
@@ -246,7 +270,7 @@ class _ChatScreenState extends State<ChatScreen> {
                             maxWidth: MediaQuery.of(context).size.width * 0.75,
                           ),
                           decoration: BoxDecoration(
-                            color: message.isMe ? Colors.blue.shade600 : Colors.grey.shade200,
+                            color: message.isMe ? myBubbleColor : otherBubbleColor,
                             borderRadius: BorderRadius.only(
                               topLeft: const Radius.circular(16),
                               topRight: const Radius.circular(16),
@@ -260,7 +284,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               Text(
                                 message.text,
                                 style: TextStyle(
-                                  color: message.isMe ? Colors.white : Colors.black87,
+                                  color: message.isMe ? Colors.white : otherTextColor,
                                   fontSize: 15,
                                 ),
                               ),
@@ -273,7 +297,9 @@ class _ChatScreenState extends State<ChatScreen> {
                                       'Edited • ',
                                       style: TextStyle(
                                         fontSize: 10,
-                                        color: message.isMe ? Colors.white70 : Colors.grey.shade600,
+                                        color: message.isMe
+                                            ? Colors.white70
+                                            : (isDark ? Colors.grey.shade400 : Colors.grey.shade600),
                                         fontStyle: FontStyle.italic,
                                       ),
                                     ),
@@ -281,7 +307,9 @@ class _ChatScreenState extends State<ChatScreen> {
                                     _formatTime(message.timestamp.toLocal()),
                                     style: TextStyle(
                                       fontSize: 10,
-                                      color: message.isMe ? Colors.white70 : Colors.grey.shade600,
+                                      color: message.isMe
+                                          ? Colors.white70
+                                          : (isDark ? Colors.grey.shade400 : Colors.grey.shade600),
                                     ),
                                   ),
                                 ],
@@ -299,20 +327,23 @@ class _ChatScreenState extends State<ChatScreen> {
 
           if (_editingMessage != null)
             Container(
-              color: Colors.blue.shade50,
+              color: isDark ? const Color(0xFF1E293B) : Colors.blue.shade50,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               child: Row(
                 children: [
-                  const Icon(Icons.edit, size: 18, color: Colors.blue),
+                  Icon(Icons.edit, size: 18, color: isDark ? Colors.blue.shade300 : Colors.blue),
                   const SizedBox(width: 8),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Editing message...',
-                      style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: isDark ? Colors.blue.shade300 : Colors.blue,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, size: 18, color: Colors.grey),
+                    icon: Icon(Icons.close, size: 18, color: subtextColor),
                     onPressed: _cancelEditing,
                   )
                 ],
@@ -322,10 +353,13 @@ class _ChatScreenState extends State<ChatScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: surfaceColor,
+              border: Border(
+                top: BorderSide(color: dividerBorderColor, width: 0.8),
+              ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
+                  color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
                   blurRadius: 4,
                   offset: const Offset(0, -2),
                 ),
@@ -339,11 +373,13 @@ class _ChatScreenState extends State<ChatScreen> {
                     textCapitalization: TextCapitalization.sentences,
                     textInputAction: TextInputAction.send,
                     onSubmitted: (_) => _sendOrUpdateMessage(),
+                    style: TextStyle(color: titleColor),
                     decoration: InputDecoration(
                       hintText: _editingMessage != null ? 'Edit message...' : 'Type a message...',
+                      hintStyle: TextStyle(color: isDark ? Colors.grey.shade500 : Colors.grey.shade500),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       filled: true,
-                      fillColor: Colors.grey.shade100,
+                      fillColor: isDark ? const Color(0xFF262626) : Colors.grey.shade100,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(24),
                         borderSide: BorderSide.none,

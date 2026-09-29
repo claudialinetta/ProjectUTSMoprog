@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:projectmoprog/services/protection_stats_service.dart';
 
-import '../../models/protection_stats.dart';
 import '../../models/call_history_model.dart';
+import '../../models/protection_stats.dart';
+import '../../services/protection_stats_service.dart';
 
 class ProtectionStatsScreen extends StatefulWidget {
   final String ownerId;
-
   const ProtectionStatsScreen({super.key, required this.ownerId});
 
   @override
@@ -17,13 +16,11 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
   final ProtectionStatsService _service = ProtectionStatsService();
 
   ProtectionStats _stats = const ProtectionStats.empty();
-
-  List<ProtectionActivity> _activity = [];
-  List<CallHistoryModel> _recentCalls = [];
-
+  List<CheckEntry> _checkedHistory = [];
+  List<CallHistoryModel> _spamHistory = [];
+  List<ReportHistoryEntry> _reportHistory = [];
+  List<DailyActivity> _weeklyActivity = [];
   bool _isLoading = true;
-  bool _showRecentActivity = false;
-
   String? _error;
 
   @override
@@ -39,40 +36,41 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
     });
 
     try {
-      final stats = await _service.getStats(widget.ownerId);
-      final recentChecks = await _service.getRecentChecks(widget.ownerId);
-      final recentCalls = await _service.getRecentCalls(widget.ownerId);
+      final results = await Future.wait([
+        _service.getStats(widget.ownerId),
+        _service.getCheckedHistory(widget.ownerId),
+        _service.getSpamHistory(widget.ownerId),
+        _service.getReportHistory(widget.ownerId),
+        _service.getWeeklyActivity(widget.ownerId),
+      ]);
 
       if (!mounted) return;
-
       setState(() {
-        _stats = stats;
-
-        _activity = recentChecks.map((item) {
-          final checkedAt = DateTime.parse(item['checked_at'].toString());
-
-          return ProtectionActivity(
-            message: '${item['name']} (${item['phone_number']})',
-            createdAt: checkedAt,
-          );
-        }).toList();
-
-        _recentCalls = recentCalls;
-
+        _stats = results[0] as ProtectionStats;
+        _checkedHistory = results[1] as List<CheckEntry>;
+        _spamHistory = results[2] as List<CallHistoryModel>;
+        _reportHistory = results[3] as List<ReportHistoryEntry>;
+        _weeklyActivity = results[4] as List<DailyActivity>;
         _isLoading = false;
       });
     } catch (e) {
+      debugPrint('Protection stats load failed: $e');
       if (!mounted) return;
-
-      debugPrint('Failed to load protection stats: $e');
-
       setState(() {
         _isLoading = false;
-        _error =
-            'Failed to load your stats.\n'
-            'Check your internet connection.';
+        _error = 'Failed to load your stats.\nCheck your internet connection.';
       });
     }
+  }
+
+  String _relativeTime(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inDays == 1) return 'Yesterday';
+    if (diff.inDays < 7) return '${diff.inDays}d ago';
+    return '${dt.day}/${dt.month}/${dt.year}';
   }
 
   @override
@@ -84,326 +82,230 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
   }
 
   Widget _buildBody() {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (_error != null) {
-      return _buildError();
-    }
+    if (_isLoading) return const Center(child: CircularProgressIndicator());
+    if (_error != null) return _buildError();
 
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _buildIntro(),
-
+          const Text(
+            'Here is how you have been protected and how you have helped '
+            'protect others.',
+            style: TextStyle(color: Colors.black54),
+          ),
           const SizedBox(height: 20),
-
-          // Numbers Checked
-          _buildNumbersCheckedCard(),
-
+          _buildExpandableCard(
+            icon: Icons.search,
+            color: Colors.blue,
+            label: 'Numbers Checked',
+            value: _stats.numbersChecked,
+            description:
+                'Numbers you have searched or called through this app.',
+            children: _checkedHistory
+                .map(
+                  (item) => _buildHistoryRow(
+                    icon: Icons.search,
+                    color: Colors.blue,
+                    title: item.name,
+                    subtitle:
+                        '${item.phoneNumber} • ${_relativeTime(item.checkedAt)}',
+                  ),
+                )
+                .toList(),
+          ),
           const SizedBox(height: 12),
-
-          // Spam Avoided
-          _buildStatCard(
+          _buildWeeklyChart(),
+          const SizedBox(height: 12),
+          _buildExpandableCard(
             icon: Icons.shield_outlined,
             color: Colors.red,
             label: 'Spam Avoided',
             value: _stats.spamAvoided,
             description:
-                'Numbers flagged as spam before you had to find out yourself.',
+                'Spam numbers you were warned about when checking a contact.',
+            children: _spamHistory
+                .map(
+                  (item) => _buildHistoryRow(
+                    icon: Icons.shield_outlined,
+                    color: Colors.red,
+                    title: item.name,
+                    subtitle:
+                        '${item.phoneNumber} • ${_relativeTime(item.happenedAt)}',
+                  ),
+                )
+                .toList(),
           ),
-
           const SizedBox(height: 12),
-
-          // Reports Given
-          _buildStatCard(
+          _buildExpandableCard(
             icon: Icons.flag_outlined,
             color: Colors.orange,
             label: 'Reports Given',
             value: _stats.reportsGiven,
             description: 'Reports you contributed to help protect other users.',
+            children: _reportHistory
+                .map(
+                  (item) => _buildHistoryRow(
+                    icon: Icons.flag_outlined,
+                    color: Colors.orange,
+                    title: item.contactName,
+                    subtitle:
+                        '${item.reason} • ${_relativeTime(item.createdAt)}',
+                  ),
+                )
+                .toList(),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildIntro() {
-    return const Text(
-      'Here is how you have been protected and how you have helped '
-      'protect others.',
-      style: TextStyle(color: Colors.black54),
-    );
-  }
-
-  Widget _buildNumbersCheckedCard() {
-    final activities = _buildCombinedActivities();
-
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CircleAvatar(
-                  radius: 24,
-                  backgroundColor: Colors.blue.withValues(alpha: 0.15),
-                  child: const Icon(Icons.search, color: Colors.blue),
-                ),
-
-                const SizedBox(width: 14),
-
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${_stats.numbersChecked}',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const Text(
-                        'Numbers Checked',
-                        style: TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Numbers you have searched or checked through this app.',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          if (activities.isNotEmpty) ...[
-            const Divider(height: 1, indent: 16, endIndent: 16),
-
-            InkWell(
-              onTap: () {
-                setState(() {
-                  _showRecentActivity = !_showRecentActivity;
-                });
-              },
-              borderRadius: const BorderRadius.vertical(
-                bottom: Radius.circular(14),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.history, size: 20, color: Colors.grey.shade700),
-
-                    const SizedBox(width: 10),
-
-                    const Expanded(
-                      child: Text(
-                        'Recent Activity',
-                        style: TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                    ),
-
-                    Icon(
-                      _showRecentActivity
-                          ? Icons.keyboard_arrow_up
-                          : Icons.keyboard_arrow_down,
-                      color: Colors.grey.shade700,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            if (_showRecentActivity) _buildActivityList(activities),
-          ],
-        ],
-      ),
-    );
-  }
-
-  List<_ActivityItem> _buildCombinedActivities() {
-    final List<_ActivityItem> activities = [];
-
-    for (final activity in _activity) {
-      activities.add(
-        _ActivityItem(
-          name: activity.message,
-          subtitle: 'Number checked',
-          date: activity.createdAt,
-          icon: Icons.search,
-          iconColor: Colors.blue,
-        ),
-      );
-    }
-
-    for (final call in _recentCalls) {
-      activities.add(
-        _ActivityItem(
-          name: '${call.name} (${call.phoneNumber})',
-          subtitle: _getCallTypeLabel(call.type),
-          date: call.happenedAt,
-          icon: _getCallIcon(call.type),
-          iconColor: _getCallIconColor(call.type),
-        ),
-      );
-    }
-
-    activities.sort((a, b) => b.date.compareTo(a.date));
-
-    return activities.take(10).toList();
-  }
-
-  Widget _buildActivityList(List<_ActivityItem> activities) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
-      child: Column(
-        children: activities.asMap().entries.map((entry) {
-          final index = entry.key;
-          final activity = entry.value;
-
-          return _buildActivityItem(
-            activity,
-            isLast: index == activities.length - 1,
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildActivityItem(_ActivityItem activity, {required bool isLast}) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 36,
-          child: Column(
-            children: [
-              CircleAvatar(
-                radius: 17,
-                backgroundColor: activity.iconColor.withValues(alpha: 0.12),
-                child: Icon(activity.icon, size: 17, color: activity.iconColor),
-              ),
-
-              if (!isLast)
-                Container(width: 1, height: 34, color: Colors.grey.shade300),
-            ],
-          ),
-        ),
-
-        const SizedBox(width: 12),
-
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.only(top: 2, bottom: 14),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        activity.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-
-                      const SizedBox(height: 2),
-
-                      Text(
-                        activity.subtitle,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(width: 8),
-
-                Text(
-                  _formatRelativeTime(activity.date),
-                  style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatCard({
+  Widget _buildExpandableCard({
     required IconData icon,
     required Color color,
     required String label,
     required int value,
     required String description,
+    required List<Widget> children,
   }) {
+    return Card(
+      elevation: 1,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      child: ExpansionTile(
+        tilePadding: const EdgeInsets.all(16),
+        leading: CircleAvatar(
+          radius: 24,
+          backgroundColor: color.withValues(alpha: 0.15),
+          child: Icon(icon, color: color),
+        ),
+        title: Text(
+          '$value',
+          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+            Text(
+              description,
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            ),
+          ],
+        ),
+        children: children.isEmpty
+            ? [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    'No activity yet',
+                    style: TextStyle(color: Colors.grey.shade500),
+                  ),
+                ),
+              ]
+            : children,
+      ),
+    );
+  }
+
+  Widget _buildHistoryRow({
+    required IconData icon,
+    required Color color,
+    required String title,
+    required String subtitle,
+  }) {
+    return ListTile(
+      dense: true,
+      leading: Icon(icon, size: 18, color: color),
+      title: Text(
+        title,
+        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+      ),
+    );
+  }
+
+  Widget _buildWeeklyChart() {
+    if (_weeklyActivity.isEmpty) return const SizedBox.shrink();
+
+    final maxCount = _weeklyActivity
+        .map((d) => d.count)
+        .fold(0, (a, b) => a > b ? a : b);
+    final activeDays = _weeklyActivity.where((d) => d.count > 0).length;
+    final total = _weeklyActivity.fold(0, (sum, d) => sum + d.count);
+    const weekdayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Row(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CircleAvatar(
-              radius: 24,
-              backgroundColor: color.withValues(alpha: 0.15),
-              child: Icon(icon, color: color),
+            const Row(
+              children: [
+                Icon(Icons.show_chart, size: 20, color: Colors.blue),
+                SizedBox(width: 8),
+                Text(
+                  'Check Activity',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ],
             ),
-
-            const SizedBox(width: 14),
-
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '$value',
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+            Text(
+              'Last 7 days',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 72,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: _weeklyActivity.map((d) {
+                  final ratio = maxCount == 0 ? 0.0 : d.count / maxCount;
+                  return Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 3),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Container(
+                            height: 40 * ratio + 4,
+                            decoration: BoxDecoration(
+                              color: d.count > 0
+                                  ? Colors.blue
+                                  : Colors.grey.shade200,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            weekdayLabels[d.day.weekday - 1],
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-
-                  Text(
-                    label,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-
-                  const SizedBox(height: 4),
-
-                  Text(
-                    description,
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                  ),
-                ],
+                  );
+                }).toList(),
               ),
+            ),
+            const Divider(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildMiniStat('Total checks', '$total'),
+                _buildMiniStat('Active days', '$activeDays'),
+                _buildMiniStat('Busiest day', '$maxCount'),
+              ],
             ),
           ],
         ),
@@ -411,77 +313,19 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
     );
   }
 
-  IconData _getCallIcon(CallType type) {
-    switch (type) {
-      case CallType.incoming:
-        return Icons.call_received;
-
-      case CallType.outgoing:
-        return Icons.call_made;
-
-      case CallType.missed:
-        return Icons.call_missed;
-
-      case CallType.searched:
-        return Icons.search;
-    }
-  }
-
-  Color _getCallIconColor(CallType type) {
-    switch (type) {
-      case CallType.incoming:
-        return Colors.green;
-
-      case CallType.outgoing:
-        return Colors.blue;
-
-      case CallType.missed:
-        return Colors.red;
-
-      case CallType.searched:
-        return Colors.blue;
-    }
-  }
-
-  String _getCallTypeLabel(CallType type) {
-    switch (type) {
-      case CallType.incoming:
-        return 'Incoming call';
-
-      case CallType.outgoing:
-        return 'Outgoing call';
-
-      case CallType.missed:
-        return 'Missed call';
-
-      case CallType.searched:
-        return 'Searched';
-    }
-  }
-
-  String _formatRelativeTime(DateTime date) {
-    final difference = DateTime.now().difference(date.toLocal());
-
-    if (difference.inSeconds < 60) {
-      return 'Just now';
-    }
-
-    if (difference.inMinutes < 60) {
-      return '${difference.inMinutes}m ago';
-    }
-
-    if (difference.inHours < 24) {
-      return '${difference.inHours}h ago';
-    }
-
-    if (difference.inDays < 7) {
-      return '${difference.inDays}d ago';
-    }
-
-    final local = date.toLocal();
-
-    return '${local.day.toString().padLeft(2, '0')}/'
-        '${local.month.toString().padLeft(2, '0')}';
+  Widget _buildMiniStat(String label, String value) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        Text(
+          label,
+          style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+        ),
+      ],
+    );
   }
 
   Widget _buildError() {
@@ -492,33 +336,13 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.cloud_off, size: 48, color: Colors.grey.shade500),
-
             const SizedBox(height: 12),
-
             Text(_error!, textAlign: TextAlign.center),
-
             const SizedBox(height: 16),
-
             ElevatedButton(onPressed: _load, child: const Text('Retry')),
           ],
         ),
       ),
     );
   }
-}
-
-class _ActivityItem {
-  final String name;
-  final String subtitle;
-  final DateTime date;
-  final IconData icon;
-  final Color iconColor;
-
-  const _ActivityItem({
-    required this.name,
-    required this.subtitle,
-    required this.date,
-    required this.icon,
-    required this.iconColor,
-  });
 }

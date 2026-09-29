@@ -25,14 +25,20 @@ class ContactService {
     required String contactId,
     required int currentCount,
     required String reporterId,
+    required String reason,
+    required String contactName,
+    required String phoneNumber,
   }) async {
     try {
       await _supabase.from('contact_reports').insert({
         'owner_id': reporterId,
         'contact_id': int.parse(contactId),
+        'reason': reason,
+        'contact_name': contactName,
+        'phone_number': phoneNumber,
       });
     } on PostgrestException catch (e) {
-      if (e.code == '23505') return false; // already reported before
+      if (e.code == '23505') return false;
       throw Exception('Failed to log report: $e');
     }
 

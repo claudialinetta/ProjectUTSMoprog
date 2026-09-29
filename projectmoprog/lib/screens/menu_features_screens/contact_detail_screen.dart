@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:projectmoprog/models/contact_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../services/number_check_service.dart';
 import '../chat_screens/chat_screen.dart';
+import '../../models/call_history_model.dart';
+import '../../services/call_history_service.dart';
 
 class ContactDetailScreen extends StatefulWidget {
   final ContactModel contact;
@@ -29,25 +30,36 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
     super.initState();
     _currentContact = widget.contact;
 
-    print('OPENING CONTACT DETAIL');
-    print('currentUserId: ${widget.currentUserId}');
-    print('contact: ${_currentContact.name}');
-    print('phone: ${_currentContact.phoneNumber}');
-
+    _recordCallHistory();
     _recordCheck();
   }
 
-  Future<void> _recordCheck() async {
-    try {
-      await NumberCheckService().record(
-        ownerId: widget.currentUserId,
-        name: _currentContact.name,
-        phoneNumber: _currentContact.phoneNumber,
-      );
+  void _recordCallHistory() {
+    final c = widget.contact;
+    final isSpam = c.reportCount >= 10 || c.tag == 'Spam Likely';
 
-      print('CHECK SUCCESS');
+    CallHistoryService().record(
+      ownerId: widget.currentUserId,
+      name: c.name,
+      phoneNumber: c.phoneNumber,
+      status: isSpam ? CallStatus.spam : CallStatus.fromTag(c.tag),
+      type: CallType.searched,
+    );
+  }
+
+  Future<void> _recordCheck() async {
+    final c = widget.contact;
+
+    try {
+      await _supabase.from('number_checks').insert({
+        'owner_id': widget.currentUserId,
+        'name': c.name,
+        'phone_number': c.phoneNumber,
+        'phone_key': c.phoneNumber.replaceAll(RegExp(r'\D'), ''),
+        'checked_at': DateTime.now().toUtc().toIso8601String(),
+      });
     } catch (e) {
-      print('CHECK FAILED: $e');
+      debugPrint('Failed to log number check: $e');
     }
   }
 
@@ -164,6 +176,16 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
                   final newPhone = phoneController.text.trim();
                   if (newName.isEmpty || newPhone.isEmpty) return;
 
+                  String newInitial = '?';
+                  final words = newName.split(RegExp(r'\s+'));
+                  if (words.isNotEmpty && words[0].isNotEmpty) {
+                    if (words.length == 1) {
+                      newInitial = words[0][0].toUpperCase();
+                    } else {
+                      newInitial = (words[0][0] + words[1][0]).toUpperCase();
+                    }
+                  }
+
                   Navigator.pop(bottomSheetContext);
 
                   try {
@@ -172,9 +194,7 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
                         .update({
                           'name': newName,
                           'phoneNumber': newPhone,
-                          'avatarInitial': newName.isNotEmpty
-                              ? newName[0].toUpperCase()
-                              : '?',
+                          'avatarInitial': newInitial,
                         })
                         .eq('id', _currentContact.id);
 
@@ -185,9 +205,7 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
                         phoneNumber: newPhone,
                         tag: _currentContact.tag,
                         reportCount: _currentContact.reportCount,
-                        avatarInitial: newName.isNotEmpty
-                            ? newName[0].toUpperCase()
-                            : '?',
+                        avatarInitial: newInitial,
                         tags: _currentContact.tags,
                         ownerId: _currentContact.ownerId,
                       );

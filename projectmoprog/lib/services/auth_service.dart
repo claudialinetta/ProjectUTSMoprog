@@ -10,6 +10,65 @@ class AuthService {
   static const _sessionKey = 'current_user';
   final SupabaseClient _supabase = Supabase.instance.client;
 
+  Future<UserModel> login({
+    required String phoneNumber,
+    required String password,
+  }) async {
+    final cleanPhone = phoneNumber.trim();
+    final cleanPass = password.trim();
+
+    if (cleanPhone.isEmpty || cleanPass.isEmpty) {
+      throw AuthException('Phone number and password are required.');
+    }
+    if (cleanPass.length > 4) {
+      throw AuthException('Password must be at least 4 characters.');
+    }
+
+    try {
+      final data = await _supabase
+          .from('users')
+          .select()
+          .eq('phone_number', cleanPhone)
+          .maybeSingle();
+
+      if (data == null) {
+        throw AuthException('Phone number is not registered.');
+      }
+
+      if (data['password'] != cleanPass) {
+        throw AuthException('Invalid password.');
+      }
+
+      final user = UserModel(
+        id: data['id'].toString(),
+        name: data['name'] ?? 'GetContact User',
+        phoneNumber: data['phone_number'] ?? cleanPhone,
+        dateOfBirth: data['date_of_birth'],
+      );
+
+      await _saveSession(user);
+
+      try {
+        final notificationService = NotificationService();
+        await notificationService.createNotification(
+          ownerId: user.id,
+          title: 'Login Berhasil',
+          message: 'Terdapat aktivitas login baru pada akun Anda menggunakan perangkat ini.',
+          type: 'login',
+        );
+      } catch (e) {
+        debugPrint('Gagal membuat notifikasi login: $e');
+      }
+
+      return user;
+    } on PostgrestException catch (e) {
+      throw AuthException('Database Error: ${e.message}');
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      throw AuthException('Login failed: $e');
+    }
+  }
+
   Future<UserModel> register({
     required String name,
     required String phoneNumber,
@@ -20,10 +79,10 @@ class AuthService {
     final cleanPass = password.trim();
 
     if (cleanName.isEmpty || cleanPhone.isEmpty) {
-      throw AuthException('Nama dan nomor telepon wajib diisi.');
+      throw AuthException('Name and phone number are required.');
     }
     if (cleanPass.length < 4) {
-      throw AuthException('Kata sandi minimal 4 karakter.');
+      throw AuthException('Password must be at least 4 characters.');
     }
 
     try {
@@ -34,7 +93,7 @@ class AuthService {
           .maybeSingle();
 
       if (existingUser != null) {
-        throw AuthException('Nomor telepon ini sudah terdaftar. Silakan login.');
+        throw AuthException('Phone number is already registered.');
       }
 
       final insertedData = await _supabase.from('users').insert({
@@ -71,64 +130,13 @@ class AuthService {
       throw AuthException('Database Error: ${e.message}');
     } catch (e) {
       if (e is AuthException) rethrow;
-      throw AuthException('Terjadi kesalahan registrasi: $e');
+      throw AuthException('Registration failed: $e');
     }
   }
 
-  Future<UserModel> login({
-    required String phoneNumber,
-    required String password,
-  }) async {
-    final cleanPhone = phoneNumber.trim();
-    final cleanPass = password.trim();
-
-    if (cleanPhone.isEmpty || cleanPass.isEmpty) {
-      throw AuthException('Nomor telepon dan kata sandi wajib diisi.');
-    }
-
-    try {
-      final data = await _supabase
-          .from('users')
-          .select()
-          .eq('phone_number', cleanPhone)
-          .maybeSingle();
-
-      if (data == null) {
-        throw AuthException('Nomor telepon belum terdaftar. Silakan daftar akun terlebih dahulu.');
-      }
-
-      if (data['password'] != cleanPass) {
-        throw AuthException('Kata sandi salah. Silakan coba lagi.');
-      }
-
-      final user = UserModel(
-        id: data['id'].toString(),
-        name: data['name'] ?? 'User',
-        phoneNumber: data['phone_number'] ?? cleanPhone,
-        dateOfBirth: data['date_of_birth'],
-      );
-
-      await _saveSession(user);
-
-      try {
-        final notificationService = NotificationService();
-        await notificationService.createNotification(
-          ownerId: user.id,
-          title: 'Login Berhasil',
-          message: 'Terdapat aktivitas login baru pada akun Anda menggunakan perangkat ini.',
-          type: 'login',
-        );
-      } catch (e) {
-        debugPrint('Gagal membuat notifikasi login: $e');
-      }
-
-      return user;
-    } on PostgrestException catch (e) {
-      throw AuthException('Database Error: ${e.message}');
-    } catch (e) {
-      if (e is AuthException) rethrow;
-      throw AuthException('Terjadi kesalahan login: $e');
-    }
+  Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_sessionKey);
   }
 
   Future<UserModel?> getCurrentUser() async {
@@ -175,11 +183,6 @@ class AuthService {
       'phone_number': user.phoneNumber,
       'date_of_birth': user.dateOfBirth,
     });
-  }
-
-  Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_sessionKey);
   }
 
   Future<void> _saveSession(UserModel user) async {
