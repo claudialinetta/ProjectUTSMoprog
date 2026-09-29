@@ -49,6 +49,7 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
 
   Future<void> _recordCheck() async {
     final c = widget.contact;
+    final isSpam = c.reportCount >= 10 || c.tag == 'Spam Likely';
 
     try {
       await _supabase.from('number_checks').insert({
@@ -57,6 +58,7 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
         'phone_number': c.phoneNumber,
         'phone_key': c.phoneNumber.replaceAll(RegExp(r'\D'), ''),
         'checked_at': DateTime.now().toUtc().toIso8601String(),
+        'is_spam': isSpam,
       });
     } catch (e) {
       debugPrint('Failed to log number check: $e');
