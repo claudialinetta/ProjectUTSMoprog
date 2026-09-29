@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/notification_model.dart';
 
 class NotificationService {
@@ -76,6 +78,34 @@ class NotificationService {
       await _db.from(_table).delete().eq('id', id);
     } catch (e) {
       debugPrint('Fail to delete notification: $e');
+    }
+  }
+  Future<void> createBirthdayNotification(String ownerId) async {
+    await createNotification(
+      ownerId: ownerId,
+      title: 'Pengaturan Tanggal Lahir',
+      message: 'Silakan lengkapi tanggal lahir Anda untuk melengkapi profil akun.',
+      type: 'birthday',
+    );
+  }
+
+  Future<bool> isBirthdayCompleted(String ownerId) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('birthday_completed_$ownerId') ?? false;
+  }
+
+  Future<void> setBirthdayCompleted(String ownerId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('birthday_completed_$ownerId', true);
+
+    try {
+      await _db
+          .from(_table)
+          .update({'is_read': true})
+          .eq('owner_id', ownerId)
+          .eq('type', 'birthday');
+    } catch (e) {
+      debugPrint('Failed to update birthday notif read status: $e');
     }
   }
 }

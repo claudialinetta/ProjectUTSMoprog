@@ -223,7 +223,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
             const SizedBox(height: 32),
 
             _buildCustomTextField(
-              label: 'Name and Surname',
+              label: 'Name and Username',
               controller: _nameController,
               isDark: isDark,
             ),

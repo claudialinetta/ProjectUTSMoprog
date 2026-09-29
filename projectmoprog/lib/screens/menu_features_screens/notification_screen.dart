@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../models/notification_model.dart';
 import '../../services/notification_service.dart';
+import '../menu_tab_screen/account_settings_screen.dart';
 
 class NotificationScreen extends StatefulWidget {
   final String currentUserId;
-
   const NotificationScreen({
     super.key,
     required this.currentUserId,
@@ -54,6 +54,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   Widget _getIconForType(String type) {
     switch (type) {
+      case 'birthday':
+      return CircleAvatar(
+        backgroundColor: Colors.blueGrey.shade100,
+        child: const Icon(Icons.settings, color: Colors.blueGrey), 
+      );
       case 'login':
         return CircleAvatar(backgroundColor: Colors.blue.shade100, child: const Icon(Icons.login, color: Colors.blue));
       case 'missed_call':
@@ -146,7 +151,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                             style: TextStyle(color: Colors.grey.shade700, height: 1.4),
                           ),
                         ),
-                        onTap: () {
+                        onTap: () async{
                           if (!notif.isRead) {
                             _notificationService.markAsRead(notif.id);
                             setState(() {
@@ -157,10 +162,42 @@ class _NotificationScreenState extends State<NotificationScreen> {
                               );
                             });
                           }
-                        },
-                      ),
+
+ if (notif.type == 'birthday') {
+                          final isDone = await _notificationService.isBirthdayCompleted(widget.currentUserId);
+
+                          // Jika sudah pernah diselesaikan, tolak navigasi
+                          if (isDone) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Anda sudah pernah mengatur tanggal lahir.'),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                            return;
+                          }
+
+                          // Kunci agar tidak bisa direct lagi di kemudian hari
+                          await _notificationService.setBirthdayCompleted(widget.currentUserId);
+
+                          if (!context.mounted) return;
+
+                          // Direct sekali ke AccountSettingsScreen
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AccountSettingsScreen(
+                                initialName: '',
+                                phoneNumber: widget.currentUserId,
+                                initialDateOfBirth: null,
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                    ),
                   ),
-                    
                 );
               },
             ),
