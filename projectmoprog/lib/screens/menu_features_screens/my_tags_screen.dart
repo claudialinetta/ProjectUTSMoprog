@@ -39,9 +39,22 @@ class _MyTagsScreenState extends State<MyTagsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
-      appBar: AppBar(title: const Text("My Tags")),
+      backgroundColor: isDark ? const Color(0xFF121212) : Colors.grey.shade100,
+      appBar: AppBar(
+        title: Text(
+          "My Tags",
+          style: TextStyle(
+            color: isDark ? Colors.white : Colors.black87,
+          ),
+        ),
+        backgroundColor: isDark ? const Color(0xFF1E1E1E) : null,
+        iconTheme: IconThemeData(
+          color: isDark ? Colors.white : Colors.black87,
+        ),
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : Padding(
@@ -51,12 +64,14 @@ class _MyTagsScreenState extends State<MyTagsScreen> {
                 children: [
                   const SizedBox(height: 16),
                   _mySavedNames.isEmpty
-                      ? const Center(
+                      ? Center(
                           child: Padding(
-                            padding: EdgeInsets.only(top: 40),
+                            padding: const EdgeInsets.only(top: 40),
                             child: Text(
                               "Tags not found!",
-                              style: TextStyle(color: Colors.grey),
+                              style: TextStyle(
+                                color: isDark ? Colors.grey.shade500 : Colors.grey,
+                              ),
                             ),
                           ),
                         )
@@ -67,9 +82,14 @@ class _MyTagsScreenState extends State<MyTagsScreen> {
                             return Chip(
                               label: Text(
                                 "#$savedNames",
-                                style: const TextStyle(fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: isDark ? Colors.blue.shade100 : null, 
+                                ),
                               ),
-                              backgroundColor: Colors.blue.shade100,
+                              backgroundColor: isDark 
+                                ? Colors.blue.withValues(alpha: 0.15)
+                                : Colors.blue.shade100,
                               side: BorderSide.none,
                             );
                           }).toList(),

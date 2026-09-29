@@ -64,15 +64,27 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
   }
 
   Future<void> _deleteContact() async {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Contact'),
-        content: const Text('Are you sure you want to delete this contact?'),
+        backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        title: Text(
+          'Delete Contact',
+          style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+        ),
+        content: Text(
+          'Are you sure you want to delete this contact?',
+          style: TextStyle(color: isDark ? Colors.grey.shade300 : Colors.black87),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.blue),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
@@ -114,14 +126,23 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
       text: _currentContact.phoneNumber,
     );
 
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final Color sheetBgColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final Color textColor = isDark ? Colors.white : Colors.black87;
+    final Color inputFillColor = isDark ? const Color(0xFF2C2C2C) : Colors.transparent;
+    final Color borderColor = isDark ? const Color(0xFF424242) : Colors.grey.shade400;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
+      backgroundColor: Colors.transparent, 
       builder: (bottomSheetContext) {
-        return Padding(
+        return Container(
+          decoration: BoxDecoration(
+            color: sheetBgColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+          ),
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom,
             left: 24,
@@ -132,20 +153,33 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
+              Text(
                 'Edit Contact',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 18, 
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
               TextField(
                 controller: nameController,
                 textCapitalization: TextCapitalization.words,
+                style: TextStyle(color: textColor),
                 decoration: InputDecoration(
                   labelText: 'Name',
-                  prefixIcon: const Icon(Icons.person_outline),
+                  labelStyle: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.grey.shade700),
+                  prefixIcon: Icon(Icons.person_outline, color: isDark ? Colors.grey.shade400 : Colors.grey),
+                  filled: isDark,
+                  fillColor: inputFillColor,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: borderColor),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: borderColor),
                   ),
                 ),
               ),
@@ -153,11 +187,20 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
               TextField(
                 controller: phoneController,
                 keyboardType: TextInputType.phone,
+                style: TextStyle(color: textColor),
                 decoration: InputDecoration(
                   labelText: 'Phone Number',
-                  prefixIcon: const Icon(Icons.phone_outlined),
+                  labelStyle: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.grey.shade700),
+                  prefixIcon: Icon(Icons.phone_outlined, color: isDark ? Colors.grey.shade400 : Colors.grey),
+                  filled: isDark,
+                  fillColor: inputFillColor,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: borderColor),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: borderColor),
                   ),
                 ),
               ),
@@ -249,6 +292,8 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
     required Color color,
     required VoidCallback onTap,
   }) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Column(
       children: [
         InkWell(
@@ -257,7 +302,7 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: isDark ? 0.2 : 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: color, size: 28),
@@ -274,94 +319,118 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Container(
-        padding: const EdgeInsets.all(24.0),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.15),
-              spreadRadius: 2,
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Align(
-              alignment: Alignment.topLeft,
-              child: InkWell(
-                onTap: () => Navigator.pop(context),
-                child: const Icon(Icons.arrow_back, color: Colors.grey),
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    final Color screenBgColor = isDark ? const Color(0xFF121212) : const Color(0xFFF4F6F9);
+    
+    final Color dialogBgColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final Color textColor = isDark ? Colors.white : Colors.black87;
+    final Color subTextColor = isDark ? Colors.grey.shade400 : Colors.grey;
+    final Color shadowColor = isDark ? Colors.black.withValues(alpha: 0.5) : Colors.black.withValues(alpha: 0.15);
+
+    return Scaffold(
+      backgroundColor: screenBgColor,
+      body: Center(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+            child: Container(
+              padding: const EdgeInsets.all(24.0),
+              decoration: BoxDecoration(
+                color: dialogBgColor,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: shadowColor,
+                    spreadRadius: 2,
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
               ),
-            ),
-            CircleAvatar(
-              radius: 50,
-              backgroundColor: Colors.blue.shade100,
-              child: Text(
-                _currentContact.avatarInitial,
-                style: TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blue.shade900,
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              _currentContact.name,
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _currentContact.phoneNumber,
-              style: const TextStyle(fontSize: 18, color: Colors.grey),
-            ),
-            const SizedBox(height: 48),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildActionButton(
-                  icon: Icons.chat_bubble_rounded,
-                  label: 'Chat',
-                  color: Colors.blue.shade600,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ChatScreen(
-                          contact: _currentContact,
-                          currentUserId: widget.currentUserId,
-                        ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Align(
+                    alignment: Alignment.topLeft,
+                    child: InkWell(
+                      onTap: () => Navigator.pop(context),
+                      child: Icon(
+                        Icons.arrow_back, 
+                        color: isDark ? Colors.grey.shade300 : Colors.grey,
                       ),
-                    );
-                  },
-                ),
-                const SizedBox(width: 32),
-                _buildActionButton(
-                  icon: Icons.edit_outlined,
-                  label: 'Edit',
-                  color: Colors.orange.shade700,
-                  onTap: _showEditForm,
-                ),
-                const SizedBox(width: 32),
-                _buildActionButton(
-                  icon: Icons.delete_outline,
-                  label: 'Delete',
-                  color: Colors.red,
-                  onTap: _deleteContact,
-                ),
-              ],
+                    ),
+                  ),
+                  CircleAvatar(
+                    radius: 50,
+                    backgroundColor: isDark ? Colors.blue.shade900 : Colors.blue.shade100,
+                    child: Text(
+                      _currentContact.avatarInitial,
+                      style: TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.blue.shade100 : Colors.blue.shade900,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    _currentContact.name,
+                    style: TextStyle(
+                      fontSize: 24, 
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _currentContact.phoneNumber,
+                    style: TextStyle(
+                      fontSize: 18, 
+                      color: subTextColor,
+                    ),
+                  ),
+                  const SizedBox(height: 48),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildActionButton(
+                        icon: Icons.chat_bubble_rounded,
+                        label: 'Chat',
+                        color: isDark ? Colors.blue.shade400 : Colors.blue.shade600,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ChatScreen(
+                                contact: _currentContact,
+                                currentUserId: widget.currentUserId,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(width: 32),
+                      _buildActionButton(
+                        icon: Icons.edit_outlined,
+                        label: 'Edit',
+                        color: isDark ? Colors.orange.shade400 : Colors.orange.shade700,
+                        onTap: _showEditForm,
+                      ),
+                      const SizedBox(width: 32),
+                      _buildActionButton(
+                        icon: Icons.delete_outline,
+                        label: 'Delete',
+                        color: isDark ? Colors.red.shade400 : Colors.red,
+                        onTap: _deleteContact,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ],
+          ),
         ),
       ),
     );
