@@ -45,6 +45,7 @@ Country _selectedCountry = allCountries.firstWhere(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) {
+        final bool isDark = Theme.of(context).brightness == Brightness.dark;
         String searchQuery = '';
         return StatefulBuilder(
           builder: (context, setModalState) {
@@ -83,7 +84,7 @@ Country _selectedCountry = allCountries.firstWhere(
                           hintText: 'Search country or code...',
                           prefixIcon: const Icon(Icons.search, size: 20),
                           filled: true,
-                          fillColor: const Color(0xFFF1F5F9),
+                          fillColor: isDark ? const Color(0xFF262626) : const Color(0xFFF1F5F9),
                           contentPadding: const EdgeInsets.symmetric(vertical: 0),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
