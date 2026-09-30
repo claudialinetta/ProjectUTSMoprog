@@ -8,6 +8,32 @@ class NotificationService {
   static const String _table = 'notifications';
   final SupabaseClient _db = Supabase.instance.client;
 
+  Future<bool> isNotificationsEnabled(String ownerId) async {
+    try {
+      final response = await _db
+          .from('users')
+          .select('wants_notifications')
+          .eq('id', ownerId)
+          .maybeSingle();
+
+      return response?['wants_notifications'] ?? true;
+    } catch (e) {
+      debugPrint('Failed to fetch notification preference: $e');
+      return true;
+    }
+  }
+
+  Future<void> setNotificationsEnabled(String ownerId, bool value) async {
+    try {
+      await _db
+          .from('users')
+          .update({'wants_notifications': value})
+          .eq('id', ownerId);
+    } catch (e) {
+      debugPrint('Failed to update notification preference: $e');
+    }
+  }
+
   Future<void> createNotification({
     required String ownerId,
     required String title,
@@ -15,6 +41,11 @@ class NotificationService {
     required String type,
   }) async {
     try {
+      final bool allowed = await isNotificationsEnabled(ownerId);
+      if (!allowed) {
+        debugPrint('Notification is disabled by user in DB. Skipped.');
+        return;
+      }
       await _db.from(_table).insert({
         'owner_id': ownerId,
         'title': title,

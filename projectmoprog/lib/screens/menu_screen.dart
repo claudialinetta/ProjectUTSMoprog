@@ -7,7 +7,6 @@ import '../../services/contact_service.dart';
 import 'menu_tab_screen/account_settings_screen.dart';
 import 'menu_tab_screen/settings_screen.dart';
 import 'menu_tab_screen/profile_summary_screen.dart';
-import 'auth_screens/login_screen.dart';
 import 'menu_features_screens/notification_screen.dart';
 import '../services/notification_service.dart';
 
@@ -58,17 +57,6 @@ class _MenuScreenState extends State<MenuScreen> {
         });
       }
     }
-  }
-
-  Future<void> _logout(BuildContext context) async {
-    await AuthService().logout();
-
-    if (!context.mounted) return;
-
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
-      (route) => false,
-    );
   }
 
   Future<void> _fetchUnreadNotifications() async {
@@ -348,21 +336,6 @@ class _MenuScreenState extends State<MenuScreen> {
             ),
 
             const SizedBox(height: 24),
-
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                onPressed: () => _logout(context),
-                icon: const Icon(Icons.logout),
-                label: const Text('Logout'),
-              ),
-            ),
           ],
         ),
       ),
