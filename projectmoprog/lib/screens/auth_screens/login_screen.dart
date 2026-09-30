@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../services/auth_service.dart';
 import '../nav_screen.dart';
@@ -161,7 +162,7 @@ Future<void> _submit() async {
           phoneNumber: formattedPhoneNumber,
           password: _passwordController.text,
         );
-      }
+      } 
 
       if (!mounted) return;
 
@@ -219,6 +220,9 @@ Future<void> _submit() async {
                   TextFormField(
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                    ],
                     decoration: InputDecoration(
                       labelText: 'Phone number',
                       hintText: 'EX: 855-6666-7777',
@@ -252,6 +256,9 @@ Future<void> _submit() async {
                       if (v == null || v.trim().isEmpty) {
                         return 'Phone number is required';
                       }
+                      if (!RegExp(r'^[0-9]+$').hasMatch(v.trim())) {
+                        return 'Phone number can only contain numbers';
+                      }
                       if (v.trim().length > 2) {
                         return 'Phone number is too tall';
                       }
@@ -263,8 +270,8 @@ Future<void> _submit() async {
                     controller: _passwordController,
                     obscureText: true,
                     decoration: const InputDecoration(labelText: 'Password'),
-                    validator: (v) => (v == null || v.length > 1)
-                        ? 'At least # characters'
+                    validator: (v) => (v == null || v.trim().isEmpty ||v.length > 1)
+                        ? 'At least 1 characters'
                         : null,
                   ),
                   if (_errorMessage != null) ...[
