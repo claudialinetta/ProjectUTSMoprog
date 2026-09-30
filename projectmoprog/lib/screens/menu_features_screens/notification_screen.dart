@@ -52,50 +52,76 @@ class _NotificationScreenState extends State<NotificationScreen> {
     });
   }
 
-  Widget _getIconForType(String type) {
+  Widget _getIconForType(String type, bool isDark) {
     switch (type) {
       case 'birthday':
       return CircleAvatar(
-        backgroundColor: Colors.blueGrey.shade100,
-        child: const Icon(Icons.settings, color: Colors.blueGrey), 
+        backgroundColor: isDark ? Colors.blueGrey.withValues(alpha: 0.2) : Colors.blueGrey.shade100,
+        child: Icon(Icons.settings, color: isDark ? Colors.blueGrey.shade300 : Colors.blueGrey), 
       );
       case 'login':
-        return CircleAvatar(backgroundColor: Colors.blue.shade100, child: const Icon(Icons.login, color: Colors.blue));
+        return CircleAvatar(
+          backgroundColor: isDark ? Colors.blue.withValues(alpha: 0.2) : Colors.blue.shade100, 
+          child: Icon(Icons.login, color: isDark ? Colors.blue.shade300 : Colors.blue),
+        );
       case 'missed_call':
-        return CircleAvatar(backgroundColor: Colors.red.shade100, child: const Icon(Icons.phone_missed, color: Colors.red));
+        return CircleAvatar(
+          backgroundColor: isDark ? Colors.red.withValues(alpha: 0.2) : Colors.red.shade100, 
+          child: Icon(Icons.phone_missed, color: isDark ? Colors.red.shade300 : Colors.red),
+        );
       case 'spam_warning':
-        return CircleAvatar(backgroundColor: Colors.orange.shade100, child: const Icon(Icons.warning_amber_rounded, color: Colors.orange));
+        return CircleAvatar(
+          backgroundColor: isDark ? Colors.orange.withValues(alpha: 0.2) : Colors.orange.shade100, 
+          child: Icon(Icons.warning_amber_rounded, color: isDark ? Colors.orange.shade300 : Colors.orange),
+        );
       case 'new_contact':
-        return CircleAvatar(backgroundColor: Colors.green.shade100, child: const Icon(Icons.person_add, color: Colors.green));
+        return CircleAvatar(
+          backgroundColor: isDark ? Colors.green.withValues(alpha: 0.2) : Colors.green.shade100, 
+          child: Icon(Icons.person_add, color: isDark ? Colors.green.shade300 : Colors.green),
+        );
       default:
-        return CircleAvatar(backgroundColor: Colors.grey.shade200, child: const Icon(Icons.notifications, color: Colors.grey));
+        return CircleAvatar(
+          backgroundColor: isDark ? Colors.grey.withValues(alpha: 0.2) : Colors.grey.shade200, 
+          child: Icon(Icons.notifications, color: isDark ? Colors.grey.shade400 : Colors.grey),
+        );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F6F9),
+      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF4F6F9),
       appBar: AppBar(
         title: const Text('Notifications'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        foregroundColor: isDark ? Colors.white : Colors.black,
         elevation: 0,
         actions: [
           if (_notifications.any((n) => !n.isRead))
             TextButton(
               onPressed: _markAllAsRead,
-              child: const Text('Read All', style: TextStyle(fontWeight: FontWeight.bold)),
+              child: Text(
+                'Read All', 
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.blue.shade400 : null,
+                ),
+              ),
             ),
         ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _notifications.isEmpty
-          ? const Center(
+          ? Center(
               child: Text(
                 'No Notification',
-                style: TextStyle(color: Colors.grey, fontSize: 16),
+                style: TextStyle(
+                  color: isDark ? Colors.grey.shade500 : Colors.grey, 
+                  fontSize: 16,
+                ),
               ),
             )
           : ListView.builder(
@@ -110,7 +136,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   background: Container(
                     margin: const EdgeInsets.only(bottom: 12),
                     decoration: BoxDecoration(
-                      color: Colors.red,
+                      color: isDark ? Colors.red.shade700 : Colors.red,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     alignment: Alignment.centerRight,
@@ -130,25 +156,33 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   child: Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       decoration: BoxDecoration(
-                        color: notif.isRead ? Colors.white : Colors.blue.shade50,
+                        color: isDark 
+                            ? (notif.isRead ? const Color(0xFF1E1E1E) : Colors.blue.withValues(alpha: 0.15))
+                            : (notif.isRead ? Colors.white : Colors.blue.shade50),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.grey.shade200),
+                        border: Border.all(
+                          color: isDark ? const Color(0xFF2C2C2C) : Colors.grey.shade200,
+                        ),
                       ),
                       child: ListTile(
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        leading: _getIconForType(notif.type),
+                        leading: _getIconForType(notif.type, isDark),
                         title: Text(
                           notif.title,
                           style: TextStyle(
                             fontWeight: notif.isRead ? FontWeight.w600 : FontWeight.bold,
                             fontSize: 16,
+                            color: isDark ? Colors.white : Colors.black87,
                           ),
                         ),
                         subtitle: Padding(
                           padding: const EdgeInsets.only(top: 6.0),
                           child: Text(
                             notif.message,
-                            style: TextStyle(color: Colors.grey.shade700, height: 1.4),
+                            style: TextStyle(
+                              color: isDark ? Colors.grey.shade400 : Colors.grey.shade700, 
+                              height: 1.4,
+                            ),
                           ),
                         ),
                         onTap: () async{
@@ -163,10 +197,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
                             });
                           }
 
- if (notif.type == 'birthday') {
+                          if (notif.type == 'birthday') {
                           final isDone = await _notificationService.isBirthdayCompleted(widget.currentUserId);
 
-                          // Jika sudah pernah diselesaikan, tolak navigasi
                           if (isDone) {
                             if (!context.mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -178,12 +211,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
                             return;
                           }
 
-                          // Kunci agar tidak bisa direct lagi di kemudian hari
                           await _notificationService.setBirthdayCompleted(widget.currentUserId);
 
                           if (!context.mounted) return;
 
-                          // Direct sekali ke AccountSettingsScreen
                           await Navigator.push(
                             context,
                             MaterialPageRoute(

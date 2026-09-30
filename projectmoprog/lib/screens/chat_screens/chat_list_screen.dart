@@ -14,7 +14,7 @@ class ChatListScreen extends StatefulWidget {
 
 class _ChatListScreenState extends State<ChatListScreen> {
   final ContactService _service = ContactService();
-  List<ContactModel> _chatHistory = [];
+  List<Map<String, dynamic>> _recentChats = [];
   bool _isLoading = true;
 
   @override
@@ -24,9 +24,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 
   Future<void> _fetchChatHistory() async {
-    final contacts = await _service.getContacts(widget.currentUserId);
+    final chats = await _service.getRecentChats(widget.currentUserId);
     setState(() {
-      _chatHistory = contacts;
+      _recentChats = chats;
       _isLoading = false;
     });
   }
@@ -35,24 +35,33 @@ class _ChatListScreenState extends State<ChatListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Riwayat Chat"),
+        title: const Text("Chat History"),
       ),
       body: _isLoading 
           ? const Center(child: CircularProgressIndicator()) 
           : ListView.builder(
-              itemCount: _chatHistory.length,
+              itemCount: _recentChats.length,
               itemBuilder: (context, index) {
-                final contact = _chatHistory[index];
+                final chatData = _recentChats[index];
+                final contactData = chatData['contacts'] ?? chatData;
+                final contact = ContactModel.fromJson(contactData);
+                final lastMessage = chatData['text'] ?? "Image/Sound Message";
+                String timeString = "";
+                if (chatData['timestamp'] != null) {
+                  final timestamp = DateTime.parse(chatData['timestamp']).toLocal();
+                  timeString = "${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}";
+                }
+
                 return ListTile(
                   leading: CircleAvatar(
                     backgroundColor: Colors.blue.shade100,
                     child: Text(contact.avatarInitial),
                   ),
                   title: Text(contact.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: const Text("Pesan terakhir di sini..."),
-                  trailing: const Text("14:00", style: TextStyle(color: Colors.grey, fontSize: 12)),
-                  onTap: () {
-                    Navigator.push(
+                  subtitle: Text(lastMessage, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  trailing: Text(timeString, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                  onTap: () async {
+                    await Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => ChatScreen(
@@ -60,6 +69,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
                           currentUserId: widget.currentUserId),
                       ),
                     );
+
+                    _fetchChatHistory();
+
                   },
                 );
               },

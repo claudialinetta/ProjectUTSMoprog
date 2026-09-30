@@ -48,6 +48,9 @@ class MenuItemTile extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final bgColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final hoverColor = isDark 
+        ? Colors.white.withValues(alpha: 0.08) 
+        : Colors.black.withValues(alpha: 0.06);
     final iconBgColor = isDark
         ? Colors.blue.withValues(alpha: 0.15)
         : const Color(0xFFEDF4FF);
@@ -69,6 +72,7 @@ class MenuItemTile extends StatelessWidget {
           color: bgColor,
           child: InkWell(
             onTap: onTap,
+            hoverColor: hoverColor,
             child: Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 16.0,
@@ -153,6 +157,9 @@ class SimpleMenuTile extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final bgColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final hoverColor = isDark 
+        ? Colors.white.withValues(alpha: 0.08) 
+        : Colors.black.withValues(alpha: 0.06);
     final iconColor = isDark ? Colors.blue : const Color(0xFF007AFF);
     final titleColor = isDark ? Colors.white : const Color(0xFF1E293B);
     final dividerColor = isDark
@@ -165,6 +172,7 @@ class SimpleMenuTile extends StatelessWidget {
           color: bgColor,
           child: InkWell(
             onTap: onTap,
+            hoverColor: hoverColor,
             child: Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 16.0,
