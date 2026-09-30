@@ -52,12 +52,12 @@ class AuthService {
         final notificationService = NotificationService();
         await notificationService.createNotification(
           ownerId: user.id,
-          title: 'Login Berhasil',
-          message: 'Terdapat aktivitas login baru pada akun Anda menggunakan perangkat ini.',
+          title: 'Login Successful',
+          message: 'There is a new login activity on your account using this device.',
           type: 'login',
         );
       } catch (e) {
-        debugPrint('Gagal membuat notifikasi login: $e');
+        debugPrint('Failed to load login notification: $e');
       }
 
       return user;
@@ -81,8 +81,11 @@ class AuthService {
     if (cleanName.isEmpty || cleanPhone.isEmpty) {
       throw AuthException('Name and phone number are required.');
     }
-    if (cleanPass.length < 4) {
+    if (cleanPass.length > 4) {
       throw AuthException('Password must be at least 4 characters.');
+    }
+    if (!RegExp(r'^\+?[0-9\s]+$').hasMatch(cleanPhone)) {
+      throw AuthException('Phone number can only contain numbers');
     }
 
     try {
@@ -117,12 +120,12 @@ class AuthService {
         final notificationService = NotificationService();
         await notificationService.createNotification(
           ownerId: user.id,
-          title: 'Pengaturan Tanggal Lahir',
-          message: 'Silakan lengkapi tanggal lahir Anda untuk melengkapi profil.',
+          title: 'Brithday Setting',
+          message: 'Please fill in your date of birth to complete your profile.',
           type: 'birthday',
         );
       } catch (e) {
-        debugPrint('Gagal membuat notifikasi registrasi: $e');
+        debugPrint('Failed to load registration notification:: $e');
       }
 
       return user;
