@@ -97,7 +97,9 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF121212) : Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: isDark
+          ? const Color(0xFF121212)
+          : Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
           'Protection Stats',
@@ -185,8 +187,8 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
       'Here is how you have been protected and how you have helped '
       'protect others.',
       style: TextStyle(
-        color: isDark 
-            ? Colors.grey.shade400 
+        color: isDark
+            ? Colors.grey.shade400
             : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
       ),
     );
@@ -243,7 +245,9 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
                         'Numbers you have searched or checked through this app.',
                         style: TextStyle(
                           fontSize: 12,
-                          color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                          color: isDark
+                              ? Colors.grey.shade400
+                              : Colors.grey.shade600,
                         ),
                       ),
                     ],
@@ -255,9 +259,9 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
 
           if (activities.isNotEmpty) ...[
             Divider(
-              height: 1, 
-              indent: 16, 
-              endIndent: 16, 
+              height: 1,
+              indent: 16,
+              endIndent: 16,
               color: isDark ? const Color(0xFF2C2C2C) : null,
             ),
 
@@ -275,9 +279,11 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
                 child: Row(
                   children: [
                     Icon(
-                      Icons.history, 
-                      size: 20, 
-                      color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
+                      Icons.history,
+                      size: 20,
+                      color: isDark
+                          ? Colors.grey.shade400
+                          : Colors.grey.shade700,
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -293,7 +299,9 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
                       _showRecentActivity
                           ? Icons.keyboard_arrow_up
                           : Icons.keyboard_arrow_down,
-                      color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
+                      color: isDark
+                          ? Colors.grey.shade400
+                          : Colors.grey.shade700,
                     ),
                   ],
                 ),
@@ -367,9 +375,10 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
                           'See your checking activity and patterns.',
                           style: TextStyle(
                             fontSize: 12,
-                            color: isDark 
-                                ? Colors.grey.shade400 
-                                : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.65),
+                            color: isDark
+                                ? Colors.grey.shade400
+                                : Theme.of(context).colorScheme.onSurface
+                                      .withValues(alpha: 0.65),
                           ),
                         ),
                       ],
@@ -388,8 +397,8 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
 
           if (_showInsights) ...[
             Divider(
-              height: 1, 
-              indent: 16, 
+              height: 1,
+              indent: 16,
               endIndent: 16,
               color: isDark ? const Color(0xFF2C2C2C) : null,
             ),
@@ -459,14 +468,17 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: isDark 
-                            ? const Color(0xFF262626) 
-                            : Theme.of(context).colorScheme.surfaceContainerHighest,
+                        color: isDark
+                            ? const Color(0xFF262626)
+                            : Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: isDark 
-                              ? const Color(0xFF333333) 
-                              : Theme.of(context).colorScheme.outline.withValues(alpha: 0.25),
+                          color: isDark
+                              ? const Color(0xFF333333)
+                              : Theme.of(context).colorScheme.outline
+                                    .withValues(alpha: 0.25),
                         ),
                       ),
                       child: Row(
@@ -495,7 +507,9 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
                                   'Most frequently checked number',
                                   style: TextStyle(
                                     fontSize: 11,
-                                    color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                                    color: isDark
+                                        ? Colors.grey.shade400
+                                        : Colors.grey.shade600,
                                   ),
                                 ),
                               ],
@@ -522,8 +536,8 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
         width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: isDark 
-              ? const Color(0xFF262626) 
+          color: isDark
+              ? const Color(0xFF262626)
               : Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(12),
         ),
@@ -531,9 +545,10 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
           child: Text(
             'No checking activity in the last 7 days.',
             style: TextStyle(
-              color: isDark 
-                  ? Colors.grey.shade400 
-                  : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+              color: isDark
+                  ? Colors.grey.shade400
+                  : Theme.of(context).colorScheme.onSurface
+                        .withValues(alpha: 0.6),
             ),
           ),
         ),
@@ -560,7 +575,7 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
             Text(
               'Last 7 days',
               style: TextStyle(
-                fontSize: 11, 
+                fontSize: 11,
                 color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
               ),
             ),
@@ -610,7 +625,9 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
                         _dayLabel(date),
                         style: TextStyle(
                           fontSize: 10,
-                          color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                          color: isDark
+                              ? Colors.grey.shade400
+                              : Colors.grey.shade600,
                         ),
                       ),
                     ],
@@ -637,22 +654,32 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF262626) : colors.surfaceContainerHighest,
+        color: isDark
+            ? const Color(0xFF262626)
+            : colors.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark ? const Color(0xFF333333) : colors.outline.withValues(alpha: 0.25),
+          color: isDark
+              ? const Color(0xFF333333)
+              : colors.outline.withValues(alpha: 0.25),
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 18, color: isDark ? Colors.blue.shade400 : Colors.blue.shade700),
+          Icon(
+            icon,
+            size: 18,
+            color: isDark ? Colors.blue.shade400 : Colors.blue.shade700,
+          ),
           const SizedBox(height: 8),
           Text(
             title,
             style: TextStyle(
               fontSize: 11,
-              color: isDark ? Colors.grey.shade400 : colors.onSurface.withValues(alpha: 0.65),
+              color: isDark
+                  ? Colors.grey.shade400
+                  : colors.onSurface.withValues(alpha: 0.65),
             ),
           ),
           const SizedBox(height: 3),
@@ -661,7 +688,7 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 15, 
+              fontSize: 15,
               fontWeight: FontWeight.bold,
               color: isDark ? Colors.white : null,
             ),
@@ -671,7 +698,9 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
             subtitle,
             style: TextStyle(
               fontSize: 10,
-              color: isDark ? Colors.grey.shade500 : colors.onSurface.withValues(alpha: 0.5),
+              color: isDark
+                  ? Colors.grey.shade500
+                  : colors.onSurface.withValues(alpha: 0.5),
             ),
           ),
         ],
@@ -745,9 +774,11 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
               ),
               if (!isLast)
                 Container(
-                  width: 1, 
-                  height: 34, 
-                  color: isDark ? const Color(0xFF2C2C2C) : Colors.grey.shade300,
+                  width: 1,
+                  height: 34,
+                  color: isDark
+                      ? const Color(0xFF2C2C2C)
+                      : Colors.grey.shade300,
                 ),
             ],
           ),
@@ -780,7 +811,9 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
                         activity.subtitle,
                         style: TextStyle(
                           fontSize: 11,
-                          color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                          color: isDark
+                              ? Colors.grey.shade400
+                              : Colors.grey.shade600,
                         ),
                       ),
                     ],
@@ -792,7 +825,7 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
                 Text(
                   _formatRelativeTime(activity.date),
                   style: TextStyle(
-                    fontSize: 10, 
+                    fontSize: 10,
                     color: isDark ? Colors.grey.shade500 : Colors.grey.shade500,
                   ),
                 ),
@@ -838,7 +871,7 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
         title: Text(
           '$value',
           style: TextStyle(
-            fontSize: 24, 
+            fontSize: 24,
             fontWeight: FontWeight.bold,
             color: isDark ? Colors.white : null,
           ),
@@ -847,7 +880,7 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              label, 
+              label,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 color: isDark ? Colors.white : null,
@@ -857,9 +890,10 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
               description,
               style: TextStyle(
                 fontSize: 12,
-                color: isDark 
-                    ? Colors.grey.shade400 
-                    : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.65),
+                color: isDark
+                    ? Colors.grey.shade400
+                    : Theme.of(context).colorScheme.onSurface
+                          .withValues(alpha: 0.65),
               ),
             ),
           ],
@@ -871,7 +905,9 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
                   child: Text(
                     'No activity yet',
                     style: TextStyle(
-                      color: isDark ? Colors.grey.shade400 : Colors.grey.shade500,
+                      color: isDark
+                          ? Colors.grey.shade400
+                          : Colors.grey.shade500,
                     ),
                   ),
                 ),
@@ -895,7 +931,7 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
       title: Text(
         title,
         style: TextStyle(
-          fontSize: 13, 
+          fontSize: 13,
           fontWeight: FontWeight.w600,
           color: isDark ? Colors.white : null,
         ),
@@ -903,7 +939,7 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
       subtitle: Text(
         subtitle,
         style: TextStyle(
-          fontSize: 11, 
+          fontSize: 11,
           color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
         ),
       ),
@@ -918,8 +954,6 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
         return Icons.call_made;
       case CallType.missed:
         return Icons.call_missed;
-      case CallType.searched:
-        return Icons.manage_search;
     }
   }
 
@@ -931,8 +965,6 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
         return Colors.blue;
       case CallType.missed:
         return Colors.red;
-      case CallType.searched:
-        return Colors.indigo;
     }
   }
 
@@ -944,8 +976,6 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
         return 'Outgoing call';
       case CallType.missed:
         return 'Missed call';
-      case CallType.searched:
-        return 'Searched';
     }
   }
 
@@ -995,13 +1025,13 @@ class _ProtectionStatsScreenState extends State<ProtectionStatsScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.cloud_off, 
-              size: 48, 
+              Icons.cloud_off,
+              size: 48,
               color: isDark ? Colors.grey.shade400 : Colors.grey.shade500,
             ),
             const SizedBox(height: 12),
             Text(
-              _error!, 
+              _error!,
               textAlign: TextAlign.center,
               style: TextStyle(color: isDark ? Colors.grey.shade300 : null),
             ),

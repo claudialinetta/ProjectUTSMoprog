@@ -87,22 +87,11 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
 
     try {
       await _service.delete(item.id);
-      _showMessage(
-        '${item.name} dihapus',
-        action: SnackBarAction(
-          label: 'Undo',
-          onPressed: () => _undoDelete(item),
-        ),
-      );
+      _showMessage('${item.name} deleted');
     } catch (e) {
       _showMessage('Failed to delete. Try again.');
       _load(showSpinner: false);
     }
-  }
-
-  Future<void> _undoDelete(CallHistoryModel item) async {
-    await _service.restore(item);
-    await _load(showSpinner: false);
   }
 
   Future<void> _confirmClearAll() async {
@@ -118,14 +107,18 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
         ),
         content: Text(
           'All your history will be deleted and cannot be restored.',
-          style: TextStyle(color: isDark ? Colors.grey.shade300 : Colors.black87),
+          style: TextStyle(
+            color: isDark ? Colors.grey.shade300 : Colors.black87,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
             child: Text(
               'Cancel',
-              style: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.blue),
+              style: TextStyle(
+                color: isDark ? Colors.grey.shade400 : Colors.blue,
+              ),
             ),
           ),
           TextButton(
@@ -149,7 +142,7 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
   Future<void> _markAsSpam(CallHistoryModel item) async {
     try {
       _showMessage('Marked as spam.');
-      _load(showSpinner: false); 
+      _load(showSpinner: false);
     } catch (e) {
       _showMessage('Failed to change status.');
     }
@@ -191,7 +184,7 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
                   'Calling Option',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 16, 
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: isDark ? Colors.white : Colors.black87,
                   ),
@@ -200,27 +193,33 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
               Divider(color: isDark ? const Color(0xFF2C2C2C) : null),
               if (item.isUnknownCaller)
                 if (item.status == CallStatus.spam)
-                    ListTile(
-                      leading: const Icon(Icons.restore, color: Colors.blue),
-                      title: const Text(
-                        'Unmarked contact',
-                        style: TextStyle(color: Colors.blue, fontWeight: FontWeight.w500),
+                  ListTile(
+                    leading: const Icon(Icons.restore, color: Colors.blue),
+                    title: const Text(
+                      'Unmarked contact',
+                      style: TextStyle(
+                        color: Colors.blue,
+                        fontWeight: FontWeight.w500,
                       ),
-                      onTap: () {
-                        Navigator.pop(context);
-                        _markAsUnknown(item);
-                      },
-                    )
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _markAsUnknown(item);
+                    },
+                  )
                 else
                   ListTile(
                     leading: const Icon(Icons.block, color: Colors.red),
                     title: const Text(
                       'Marked as spam',
-                      style: TextStyle(color: Colors.red, fontWeight: FontWeight.w500),
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                     onTap: () {
-                      Navigator.pop(context); 
-                      _markAsSpam(item); 
+                      Navigator.pop(context);
+                      _markAsSpam(item);
                     },
                   )
               else
@@ -229,7 +228,9 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
                   child: Text(
                     'This contact is already been saved by you.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.black87),
+                    style: TextStyle(
+                      color: isDark ? Colors.grey.shade400 : Colors.black87,
+                    ),
                   ),
                 ),
             ],
@@ -252,17 +253,18 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
         ),
         backgroundColor: isDark ? const Color(0xFF121212) : null,
         iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black87),
-        actionsIconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black87),
+        actionsIconTheme: IconThemeData(
+          color: isDark ? Colors.white : Colors.black87,
+        ),
         actions: [
-          if (_all.isNotEmpty)
-            IconButton(
-              tooltip: 'Delete all',
-              icon: const Icon(Icons.delete_sweep_outlined),
-              onPressed: _confirmClearAll,
-            ),
+          IconButton(
+            tooltip: 'Delete all',
+            icon: const Icon(Icons.delete_sweep_outlined),
+            onPressed: _confirmClearAll,
+          ),
         ],
       ),
-      body: _buildBody(),
+      body: Center(child: _buildBody()),
     );
   }
 
@@ -332,7 +334,7 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
           return ChoiceChip(
             label: Text('$label ($count)'),
             labelStyle: TextStyle(
-              color: isSelected 
+              color: isSelected
                   ? (isDark ? Colors.white : Colors.black87)
                   : (isDark ? Colors.grey.shade300 : Colors.black87),
             ),
@@ -354,7 +356,9 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
       return Center(
         child: Text(
           _all.isEmpty ? 'No history yet' : 'History not found',
-          style: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.grey.shade600),
+          style: TextStyle(
+            color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+          ),
         ),
       );
     }
@@ -431,7 +435,7 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
 
   Widget _buildDateHeader(String label) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 2),
       child: Text(
@@ -468,15 +472,17 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.cloud_off, 
-              size: 48, 
+              Icons.cloud_off,
+              size: 48,
               color: isDark ? Colors.grey.shade400 : Colors.grey.shade500,
             ),
             const SizedBox(height: 12),
             Text(
-              _error!, 
+              _error!,
               textAlign: TextAlign.center,
-              style: TextStyle(color: isDark ? Colors.grey.shade300 : Colors.black87),
+              style: TextStyle(
+                color: isDark ? Colors.grey.shade300 : Colors.black87,
+              ),
             ),
             const SizedBox(height: 16),
             ElevatedButton(onPressed: _load, child: const Text('Try again')),
