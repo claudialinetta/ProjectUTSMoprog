@@ -25,8 +25,6 @@ class CallHistoryTile extends StatelessWidget {
         return Icons.call_made;
       case CallType.missed:
         return Icons.call_missed;
-      case CallType.searched:
-        return Icons.search;
     }
   }
 
@@ -39,10 +37,10 @@ class CallHistoryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     final statusColor = _statusColor();
     final isSpam = item.status == CallStatus.spam;
-    
+
     final typeColor = item.type == CallType.missed
         ? (isDark ? Colors.red.shade400 : Colors.red)
         : (isDark ? Colors.grey.shade400 : Colors.grey.shade600);
@@ -85,9 +83,7 @@ class CallHistoryTile extends StatelessWidget {
           children: [
             Text(
               item.phoneNumber,
-              style: TextStyle(
-                color: isDark ? Colors.grey.shade400 : null,
-              ),
+              style: TextStyle(color: isDark ? Colors.grey.shade400 : null),
             ),
             const SizedBox(height: 4),
             Row(
@@ -95,7 +91,9 @@ class CallHistoryTile extends StatelessWidget {
                 Icon(_typeIcon(), size: 14, color: typeColor),
                 const SizedBox(width: 4),
                 Text(
-                  '${item.type.label} • ${_time()}',
+                  item.durationSeconds > 0
+                      ? '${item.type.label} • ${_time()} • ${item.formattedDuration}'
+                      : '${item.type.label} • ${_time()}',
                   style: TextStyle(fontSize: 12, color: typeColor),
                 ),
               ],

@@ -1,4 +1,5 @@
 import 'contact_tag.dart';
+
 import 'dart:convert';
 
 enum CallStatus {
@@ -25,10 +26,9 @@ enum CallStatus {
 }
 
 enum CallType {
-  incoming('Masuk'),
-  outgoing('Keluar'),
-  missed('Tak terjawab'),
-  searched('Dicari');
+  incoming('Incoming'),
+  outgoing('Outgoing'),
+  missed('Missed');
 
   final String label;
   const CallType(this.label);
@@ -36,7 +36,7 @@ enum CallType {
   static CallType fromString(String? value) {
     return CallType.values.firstWhere(
       (type) => type.name == value,
-      orElse: () => CallType.searched,
+      orElse: () => CallType.missed,
     );
   }
 }
@@ -50,6 +50,7 @@ class CallHistoryModel {
   final CallType type;
   final DateTime happenedAt;
   final List<ContactTag> tags;
+  final int durationSeconds;
 
   bool get isUnknownCaller => name == 'Unknown Caller' || name == phoneNumber;
 
@@ -61,12 +62,20 @@ class CallHistoryModel {
     required this.status,
     required this.type,
     required this.happenedAt,
+    this.durationSeconds = 0,
     this.tags = const [],
   });
 
   String get initial {
     final trimmed = name.trim();
     return trimmed.isEmpty ? '?' : trimmed.substring(0, 1).toUpperCase();
+  }
+
+  String get formattedDuration {
+    if (durationSeconds <= 0) return '';
+    final minutes = (durationSeconds ~/ 60).toString().padLeft(2, '0');
+    final seconds = (durationSeconds % 60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
   }
 
   factory CallHistoryModel.fromMap(Map<String, dynamic> map) {
@@ -80,7 +89,7 @@ class CallHistoryModel {
         } catch (_) {}
       }
     }
-    
+
     final parsedTags = tagsData
         .map((e) => ContactTag.fromJson(Map<String, dynamic>.from(e)))
         .toList();
@@ -95,6 +104,7 @@ class CallHistoryModel {
       happenedAt:
           DateTime.tryParse(map['happened_at']?.toString() ?? '')?.toLocal() ??
           DateTime.now(),
+      durationSeconds: (map['duration_seconds'] as int?) ?? 0,
       tags: parsedTags,
     );
   }

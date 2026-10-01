@@ -12,9 +12,11 @@ class CallHistoryService {
 
   static String toPhoneKey(String phone) {
     var digits = phone.replaceAll(RegExp(r'\D'), '');
+
     if (digits.startsWith('0')) {
       digits = '62${digits.substring(1)}';
     }
+
     return digits;
   }
 
@@ -37,8 +39,9 @@ class CallHistoryService {
     required String name,
     required String phoneNumber,
     CallStatus status = CallStatus.unknown,
-    CallType type = CallType.searched,
+    required CallType type,
     DateTime? happenedAt,
+    int durationSeconds = 0,
     List<ContactTag> initialTags = const [],
   }) async {
     try {
@@ -56,14 +59,15 @@ class CallHistoryService {
       CallStatus finalStatus = status;
       List<ContactTag> finalTags = List.from(initialTags);
 
-      bool isUnknown = name == 'Unknown Caller' || name == phoneNumber;
+      final bool isUnknown = name == 'Unknown Caller' || name == phoneNumber;
 
       if (isUnknown && previousCallCount >= 4) {
         finalStatus = CallStatus.spam;
 
         final hasSpamTag = finalTags.any(
-          (t) => t.label.toLowerCase().contains('spam'),
+          (tag) => tag.label.toLowerCase().contains('spam'),
         );
+
         if (!hasSpamTag) {
           finalTags.add(
             ContactTag(label: 'Spam', addedByName: 'Automated system'),
@@ -71,21 +75,25 @@ class CallHistoryService {
         }
       } else {
         final hasSpamTag = finalTags.any(
-          (t) => t.label.toLowerCase().contains('spam'),
+          (tag) => tag.label.toLowerCase().contains('spam'),
         );
-        if (hasSpamTag) finalStatus = CallStatus.spam;
+
+        if (hasSpamTag) {
+          finalStatus = CallStatus.spam;
+        }
       }
 
-      await _db.from(_table).upsert({
+      await _db.from(_table).insert({
         'owner_id': ownerId,
         'name': name,
         'phone_number': phoneNumber,
-        'phone_key': toPhoneKey(phoneNumber),
+        'phone_key': phoneKey,
         'status': finalStatus.name,
         'call_type': type.name,
         'happened_at': (happenedAt ?? DateTime.now()).toUtc().toIso8601String(),
-        'tags': finalTags.map((t) => t.toJson()).toList(),
-      }, onConflict: 'owner_id,phone_key');
+        'duration_seconds': durationSeconds,
+        'tags': finalTags.map((tag) => tag.toJson()).toList(),
+      });
 
       final notificationService = NotificationService();
 
@@ -107,20 +115,23 @@ class CallHistoryService {
         );
       }
     } catch (e) {
-      debugPrint('Failed to check history: $e');
+      debugPrint('Failed to record call history: $e');
       rethrow;
     }
   }
 
-  Future<void> restore(CallHistoryModel item) {
-    return record(
-      ownerId: item.ownerId,
-      name: item.name,
-      phoneNumber: item.phoneNumber,
-      status: item.status,
-      type: item.type,
-      happenedAt: item.happenedAt,
-    );
+  Future<void> restore(CallHistoryModel item) async {
+    await _db.from(_table).insert({
+      'owner_id': item.ownerId,
+      'name': item.name,
+      'phone_number': item.phoneNumber,
+      'phone_key': toPhoneKey(item.phoneNumber),
+      'status': item.status.name,
+      'call_type': item.type.name,
+      'happened_at': item.happenedAt.toUtc().toIso8601String(),
+      'duration_seconds': item.durationSeconds,
+      'tags': item.tags.map((tag) => tag.toJson()).toList(),
+    });
   }
 
   Future<void> delete(String id) async {
@@ -137,14 +148,6 @@ class CallHistoryService {
     required String phoneNumber,
     required CallStatus status,
   }) async {
-    await record(
-      ownerId: ownerId,
-      name: name,
-      phoneNumber: phoneNumber,
-      status: status,
-      type: CallType.searched,
-    );
-
     try {
       await _db.from('check_events').insert({
         'owner_id': ownerId,
