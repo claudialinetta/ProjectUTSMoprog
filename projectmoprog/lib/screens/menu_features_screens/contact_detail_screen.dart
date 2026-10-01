@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:projectmoprog/models/contact_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'call_screen.dart';
 import '../chat_screens/chat_screen.dart';
-import '../../models/call_history_model.dart';
-import '../../services/call_history_service.dart';
+import '../../services/call_event_service.dart';
 
 class ContactDetailScreen extends StatefulWidget {
   final ContactModel contact;
@@ -29,22 +29,7 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
   void initState() {
     super.initState();
     _currentContact = widget.contact;
-
-    _recordCallHistory();
     _recordCheck();
-  }
-
-  void _recordCallHistory() {
-    final c = widget.contact;
-    final isSpam = c.reportCount >= 10 || c.tag == 'Spam Likely';
-
-    CallHistoryService().record(
-      ownerId: widget.currentUserId,
-      name: c.name,
-      phoneNumber: c.phoneNumber,
-      status: isSpam ? CallStatus.spam : CallStatus.fromTag(c.tag),
-      type: CallType.searched,
-    );
   }
 
   Future<void> _recordCheck() async {
@@ -76,14 +61,18 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
         ),
         content: Text(
           'Are you sure you want to delete this contact?',
-          style: TextStyle(color: isDark ? Colors.grey.shade300 : Colors.black87),
+          style: TextStyle(
+            color: isDark ? Colors.grey.shade300 : Colors.black87,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: Text(
               'Cancel',
-              style: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.blue),
+              style: TextStyle(
+                color: isDark ? Colors.grey.shade400 : Colors.blue,
+              ),
             ),
           ),
           TextButton(
@@ -130,13 +119,17 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
 
     final Color sheetBgColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
     final Color textColor = isDark ? Colors.white : Colors.black87;
-    final Color inputFillColor = isDark ? const Color(0xFF2C2C2C) : Colors.transparent;
-    final Color borderColor = isDark ? const Color(0xFF424242) : Colors.grey.shade400;
+    final Color inputFillColor = isDark
+        ? const Color(0xFF2C2C2C)
+        : Colors.transparent;
+    final Color borderColor = isDark
+        ? const Color(0xFF424242)
+        : Colors.grey.shade400;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent, 
+      backgroundColor: Colors.transparent,
       builder: (bottomSheetContext) {
         return Container(
           decoration: BoxDecoration(
@@ -156,7 +149,7 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
               Text(
                 'Edit Contact',
                 style: TextStyle(
-                  fontSize: 18, 
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: textColor,
                 ),
@@ -169,8 +162,13 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
                 style: TextStyle(color: textColor),
                 decoration: InputDecoration(
                   labelText: 'Name',
-                  labelStyle: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.grey.shade700),
-                  prefixIcon: Icon(Icons.person_outline, color: isDark ? Colors.grey.shade400 : Colors.grey),
+                  labelStyle: TextStyle(
+                    color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
+                  ),
+                  prefixIcon: Icon(
+                    Icons.person_outline,
+                    color: isDark ? Colors.grey.shade400 : Colors.grey,
+                  ),
                   filled: isDark,
                   fillColor: inputFillColor,
                   border: OutlineInputBorder(
@@ -190,8 +188,13 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
                 style: TextStyle(color: textColor),
                 decoration: InputDecoration(
                   labelText: 'Phone Number',
-                  labelStyle: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.grey.shade700),
-                  prefixIcon: Icon(Icons.phone_outlined, color: isDark ? Colors.grey.shade400 : Colors.grey),
+                  labelStyle: TextStyle(
+                    color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
+                  ),
+                  prefixIcon: Icon(
+                    Icons.phone_outlined,
+                    color: isDark ? Colors.grey.shade400 : Colors.grey,
+                  ),
                   filled: isDark,
                   fillColor: inputFillColor,
                   border: OutlineInputBorder(
@@ -298,9 +301,9 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
       children: [
         InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(50),
+          borderRadius: BorderRadius.circular(45),
           child: Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(11),
             decoration: BoxDecoration(
               color: color.withValues(alpha: isDark ? 0.2 : 0.1),
               shape: BoxShape.circle,
@@ -311,7 +314,11 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
         const SizedBox(height: 8),
         Text(
           label,
-          style: TextStyle(color: color, fontWeight: FontWeight.w600),
+          style: TextStyle(
+            color: color,
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
         ),
       ],
     );
@@ -320,20 +327,27 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    
-    final Color screenBgColor = isDark ? const Color(0xFF121212) : const Color(0xFFF4F6F9);
-    
+
+    final Color screenBgColor = isDark
+        ? const Color(0xFF121212)
+        : const Color(0xFFF4F6F9);
+
     final Color dialogBgColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
     final Color textColor = isDark ? Colors.white : Colors.black87;
     final Color subTextColor = isDark ? Colors.grey.shade400 : Colors.grey;
-    final Color shadowColor = isDark ? Colors.black.withValues(alpha: 0.5) : Colors.black.withValues(alpha: 0.15);
+    final Color shadowColor = isDark
+        ? Colors.black.withValues(alpha: 0.5)
+        : Colors.black.withValues(alpha: 0.15);
 
     return Scaffold(
       backgroundColor: screenBgColor,
       body: Center(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 24.0,
+            ),
             child: Container(
               padding: const EdgeInsets.all(24.0),
               decoration: BoxDecoration(
@@ -356,20 +370,24 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
                     child: InkWell(
                       onTap: () => Navigator.pop(context),
                       child: Icon(
-                        Icons.arrow_back, 
+                        Icons.arrow_back,
                         color: isDark ? Colors.grey.shade300 : Colors.grey,
                       ),
                     ),
                   ),
                   CircleAvatar(
                     radius: 50,
-                    backgroundColor: isDark ? Colors.blue.shade900 : Colors.blue.shade100,
+                    backgroundColor: isDark
+                        ? Colors.blue.shade900
+                        : Colors.blue.shade100,
                     child: Text(
                       _currentContact.avatarInitial,
                       style: TextStyle(
                         fontSize: 40,
                         fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.blue.shade100 : Colors.blue.shade900,
+                        color: isDark
+                            ? Colors.blue.shade100
+                            : Colors.blue.shade900,
                       ),
                     ),
                   ),
@@ -377,7 +395,7 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
                   Text(
                     _currentContact.name,
                     style: TextStyle(
-                      fontSize: 24, 
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
                       color: textColor,
                     ),
@@ -386,46 +404,135 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
                   const SizedBox(height: 8),
                   Text(
                     _currentContact.phoneNumber,
-                    style: TextStyle(
-                      fontSize: 18, 
-                      color: subTextColor,
-                    ),
+                    style: TextStyle(fontSize: 18, color: subTextColor),
                   ),
                   const SizedBox(height: 48),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildActionButton(
-                        icon: Icons.chat_bubble_rounded,
-                        label: 'Chat',
-                        color: isDark ? Colors.blue.shade400 : Colors.blue.shade600,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ChatScreen(
-                                contact: _currentContact,
-                                currentUserId: widget.currentUserId,
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildActionButton(
+                          icon: Icons.chat_bubble_rounded,
+                          label: 'Chat',
+                          color: isDark
+                              ? Colors.blue.shade400
+                              : Colors.blue.shade600,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ChatScreen(
+                                  contact: _currentContact,
+                                  currentUserId: widget.currentUserId,
+                                ),
                               ),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(width: 32),
-                      _buildActionButton(
-                        icon: Icons.edit_outlined,
-                        label: 'Edit',
-                        color: isDark ? Colors.orange.shade400 : Colors.orange.shade700,
-                        onTap: _showEditForm,
-                      ),
-                      const SizedBox(width: 32),
-                      _buildActionButton(
-                        icon: Icons.delete_outline,
-                        label: 'Delete',
-                        color: isDark ? Colors.red.shade400 : Colors.red,
-                        onTap: _deleteContact,
-                      ),
-                    ],
+                            );
+                          },
+                        ),
+                        const SizedBox(width: 20),
+                        _buildActionButton(
+                          icon: Icons.edit_outlined,
+                          label: 'Edit',
+                          color: isDark
+                              ? Colors.orange.shade400
+                              : Colors.orange.shade700,
+                          onTap: _showEditForm,
+                        ),
+                        const SizedBox(width: 20),
+                        _buildActionButton(
+                          icon: Icons.delete_outline,
+                          label: 'Delete',
+                          color: isDark ? Colors.red.shade400 : Colors.red,
+                          onTap: _deleteContact,
+                        ),
+                        const SizedBox(width: 20),
+                        _buildActionButton(
+                          icon: Icons.call,
+                          label: 'Call',
+                          color: Colors.green,
+                          onTap: () async {
+                            final callService = CallEventService();
+
+                            try {
+                              final currentUser = await callService
+                                  .getCurrentUser(widget.currentUserId);
+
+                              if (currentUser == null) {
+                                if (!mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Current user could not be found.',
+                                    ),
+                                  ),
+                                );
+                                return;
+                              }
+
+                              final receiver = await callService
+                                  .findUserByPhone(_currentContact.phoneNumber);
+
+                              if (receiver == null) {
+                                if (!mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'This number is not registered on GetContact.',
+                                    ),
+                                  ),
+                                );
+                                return;
+                              }
+
+                              final receiverId = receiver['id'].toString();
+
+                              if (receiverId == widget.currentUserId) {
+                                if (!mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'You cannot call your own number.',
+                                    ),
+                                  ),
+                                );
+                                return;
+                              }
+
+                              final event = await callService.createCall(
+                                callerId: widget.currentUserId,
+                                receiverId: receiverId,
+                                callerName: currentUser['name'].toString(),
+                                callerPhone: currentUser['phoneNumber']
+                                    .toString(),
+                              );
+
+                              if (!mounted) return;
+
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => CallScreen(
+                                    contact: _currentContact,
+                                    currentUserId: widget.currentUserId,
+                                    callId: event['id'].toString(),
+                                    isCaller: true,
+                                  ),
+                                ),
+                              );
+                            } catch (e) {
+                              if (!mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Failed to start call: $e'),
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),

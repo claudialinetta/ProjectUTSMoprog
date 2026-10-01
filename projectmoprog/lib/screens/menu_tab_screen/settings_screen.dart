@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import 'account_settings_screen.dart';
 import '../../providers/theme_provider.dart';
 import '../../services/auth_service.dart';
@@ -35,7 +36,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _loadNotifStatus() async {
-    final status = await NotificationService().isNotificationsEnabled(currentUserId);
+    final status = await NotificationService().isNotificationsEnabled(
+      currentUserId,
+    );
     if (mounted) {
       setState(() {
         _notificationsEnabled = status;
@@ -422,8 +425,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   setState(() {
                                     _notificationsEnabled = value;
                                   });
-                                  // Simpan langsung ke database Supabase berdasarkan akun user!
-                                  await NotificationService().setNotificationsEnabled(currentUserId, value);
+                                  await NotificationService()
+                                      .setNotificationsEnabled(
+                                        currentUserId,
+                                        value,
+                                      );
                                 },
                               ),
                               onTap: () async {
@@ -432,7 +438,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   _notificationsEnabled = newValue;
                                 });
                                 await NotificationService()
-                                    .setNotificationsEnabled(currentUserId, newValue);
+                                    .setNotificationsEnabled(
+                                      currentUserId,
+                                      newValue,
+                                    );
                               },
                             ),
 
