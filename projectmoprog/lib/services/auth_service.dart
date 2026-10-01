@@ -192,6 +192,63 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_sessionKey, jsonEncode(user.toJson()));
   }
+
+  Future<void> deleteAccount() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_sessionKey);
+      
+      if (raw == null) {
+        throw AuthException('No active user session found to delete.');
+      }
+
+      final localUser = UserModel.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+      
+      await _supabase
+          .from('users')
+          .delete()
+          .eq('phone_number', localUser.phoneNumber);
+      await prefs.remove(_sessionKey);
+
+    } on PostgrestException catch (e) {
+      throw AuthException('Database Error during deletion: ${e.message}');
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      throw AuthException('Failed to delete account: $e');
+    }
+  }
+
+  Future<void> changePassword({
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_sessionKey);
+      if (raw == null) throw AuthException('No active session.');
+
+      final localUser = UserModel.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+
+      final data = await _supabase
+          .from('users')
+          .select('password')
+          .eq('phone_number', localUser.phoneNumber)
+          .single();
+
+      if (data['password'] != oldPassword) {
+        throw AuthException('Incorrect old password.');
+      }
+
+      await _supabase
+          .from('users')
+          .update({'password': newPassword})
+          .eq('phone_number', localUser.phoneNumber);
+
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      throw AuthException('Failed to change password: $e');
+    }
+  }
 }
 
 class AuthException implements Exception {
