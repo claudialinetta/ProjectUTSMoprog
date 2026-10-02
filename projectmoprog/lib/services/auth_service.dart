@@ -256,6 +256,44 @@ class AuthService {
       throw AuthException('Failed to change password: $e');
     }
   }
+
+  Future<bool?> getSummaryFeedback() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_sessionKey);
+      if (raw == null) return null;
+      
+      final localUser = UserModel.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+
+      final data = await _supabase
+          .from('users')
+          .select('summary_feedback')
+          .eq('phone_number', localUser.phoneNumber)
+          .maybeSingle();
+
+      return data?['summary_feedback'] as bool?;
+    } catch (e) {
+      debugPrint('Failed to fetch summary feedback: $e');
+      return null;
+    }
+  }
+
+  Future<void> updateSummaryFeedback(bool? isPositive) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_sessionKey);
+      if (raw == null) return;
+      
+      final localUser = UserModel.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+
+      await _supabase
+          .from('users')
+          .update({'summary_feedback': isPositive})
+          .eq('phone_number', localUser.phoneNumber);
+    } catch (e) {
+      debugPrint('Failed to update summary feedback: $e');
+    }
+  }
 }
 
 class AuthException implements Exception {
