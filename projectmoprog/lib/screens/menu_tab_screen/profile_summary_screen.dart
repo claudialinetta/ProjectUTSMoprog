@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../services/auth_service.dart';
 
 class SummaryGenerator {
   static final _random = Random();
@@ -105,6 +106,10 @@ class _ProfileSummaryScreenState extends State<ProfileSummaryScreen> {
   String _generatedText = '';
   List<String> _currentTags = [];
   bool _isLoading = true;
+  bool _isFeedbackRemoved = false;
+  double _feedbackOpacity = 1.0;
+  bool? _feedbackType;
+  bool _isFeedbackLoading = true;
 
   final SharedPreferencesAsync asyncPrefs = SharedPreferencesAsync();
 
@@ -128,6 +133,7 @@ class _ProfileSummaryScreenState extends State<ProfileSummaryScreen> {
   void initState() {
     super.initState();
     _loadData();
+    _loadFeedbackState();
   }
 
   Future<void> _loadData() async {
@@ -237,8 +243,49 @@ class _ProfileSummaryScreenState extends State<ProfileSummaryScreen> {
     } catch (e) {
       debugPrint('Gagal menghapus dari Supabase: $e');
     }
+
+    await AuthService().updateSummaryFeedback(null);
     
-    setState(() => _isLoading = false);
+    setState(() {
+      _isLoading = false; 
+      _isFeedbackRemoved = false; 
+      _feedbackOpacity = 1.0;
+      _feedbackType = null;
+      _isFeedbackLoading = false;
+    });
+  }
+
+  Future<void> _loadFeedbackState() async {
+    final hasGivenFeedback = await AuthService().getSummaryFeedback(); 
+    
+    if (mounted) {
+      setState(() {
+        if (hasGivenFeedback != null) {
+          _isFeedbackRemoved = true; 
+          _feedbackOpacity = 0.0; 
+          _feedbackType = hasGivenFeedback;
+        }
+        _isFeedbackLoading = false;
+      });
+    }
+  }
+
+  void _onFeedbackTapped(bool isPositive) async {
+    if (_feedbackType != null) return; 
+
+    setState(() {
+      _feedbackType = isPositive; 
+    });
+
+    await AuthService().updateSummaryFeedback(isPositive);
+
+    await Future.delayed(const Duration(seconds: 3));
+
+    if (mounted) {
+      setState(() {
+        _feedbackOpacity = 0.0;
+      });
+    }
   }
 
   @override
@@ -419,19 +466,41 @@ class _ProfileSummaryScreenState extends State<ProfileSummaryScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.thumb_up_off_alt,
-                        color: isDark ? Colors.grey.shade500 : Colors.grey,
+                  if (_isFeedbackLoading)
+                    const SizedBox(height: 48)
+                  else if (!_isFeedbackRemoved)
+                    AnimatedOpacity(
+                      opacity: _feedbackOpacity,
+                      duration: const Duration(milliseconds: 500), 
+                      onEnd: () {
+                        if (_feedbackOpacity == 0.0) {
+                          setState(() {
+                            _isFeedbackRemoved = true;
+                          });
+                        }
+                      },
+                      child: IgnorePointer(
+                        ignoring: _feedbackType != null, 
+                        child: Row(
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                _feedbackType == true ? Icons.thumb_up : Icons.thumb_up_alt_outlined,
+                                color: _feedbackType == true ? Colors.blue : Colors.grey,
+                              ),
+                              onPressed: () => _onFeedbackTapped(true),
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                _feedbackType == false ? Icons.thumb_down : Icons.thumb_down_alt_outlined,
+                                color: _feedbackType == false ? Colors.redAccent : Colors.grey, 
+                              ),
+                              onPressed: () => _onFeedbackTapped(false),
+                            ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(width: 16),
-                      Icon(
-                        Icons.thumb_down_off_alt,
-                        color: isDark ? Colors.grey.shade500 : Colors.grey,
-                      ),
-                    ],
-                  ),
+                    ),
                 ],
               ),
             ),
