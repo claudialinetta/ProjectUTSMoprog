@@ -59,6 +59,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
         backgroundColor: isDark ? Colors.blueGrey.withValues(alpha: 0.2) : Colors.blueGrey.shade100,
         child: Icon(Icons.settings, color: isDark ? Colors.blueGrey.shade300 : Colors.blueGrey), 
       );
+      case 'registration':
+        return CircleAvatar(
+          backgroundColor: isDark ? Colors.purple.withValues(alpha: 0.2) : Colors.purple.shade100,
+          child: Icon(Icons.app_registration, color: isDark ? Colors.purple.shade300 : Colors.purple),
+        );
       case 'login':
         return CircleAvatar(
           backgroundColor: isDark ? Colors.blue.withValues(alpha: 0.2) : Colors.blue.shade100, 
