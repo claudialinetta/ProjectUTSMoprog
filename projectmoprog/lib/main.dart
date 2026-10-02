@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'theme/app_theme.dart';
+import 'providers/chat_theme_provider.dart';
 import 'providers/contact_provider.dart';
 import 'providers/theme_provider.dart';
 
@@ -37,6 +38,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => ContactProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => ChatThemeProvider()),
       ],
       child: const MyApp(),
     ),
