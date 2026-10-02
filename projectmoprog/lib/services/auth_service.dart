@@ -120,7 +120,14 @@ class AuthService {
         final notificationService = NotificationService();
         await notificationService.createNotification(
           ownerId: user.id,
-          title: 'Brithday Setting',
+          title: 'Registration Successful',
+          message: 'Congratulations! Your account has been created.',
+          type: 'registration',
+        );
+
+        await notificationService.createNotification(
+          ownerId: user.id,
+          title: 'Birthday Setting',
           message: 'Please fill in your date of birth to complete your profile.',
           type: 'birthday',
         );
