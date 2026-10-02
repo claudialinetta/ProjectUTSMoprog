@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../models/contact_model.dart';
 import '../../models/chat_model.dart';
+import '../../providers/chat_theme_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -157,15 +159,26 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color activeThemeColor = context.watch<ChatThemeProvider>().chatColor;
 
-    final Color bgColor = isDark ? const Color(0xFF121212) : const Color(0xFFF4F6F9);
-    final Color surfaceColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final Color baseBg = isDark ? const Color(0xFF121212) : const Color(0xFFF4F6F9);
+    final Color baseSurface = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final Color bgColor = Color.lerp(baseBg, activeThemeColor, 0.12) ?? baseBg;
+    final Color surfaceColor = Color.lerp(baseSurface, activeThemeColor, 0.05) ?? baseSurface;
+    final Color dividerBorderColor = Color.lerp(
+      isDark ? const Color(0xFF2C2C2C) : const Color(0xFFE2E8F0), 
+      activeThemeColor, 
+      0.15
+    ) ?? const Color(0xFFE2E8F0);
     final Color titleColor = isDark ? Colors.white : const Color(0xFF1E293B);
     final Color subtextColor = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
-    final Color dividerBorderColor = isDark ? const Color(0xFF2C2C2C) : const Color(0xFFE2E8F0);
 
-    final Color myBubbleColor = isDark ? const Color(0xFF2563EB) : Colors.blue.shade600;
-    final Color otherBubbleColor = isDark ? const Color(0xFF262626) : const Color(0xFFE9ECEF);
+    final Color myBubbleColor = activeThemeColor;
+    final Color otherBubbleColor = Color.lerp(
+      isDark ? const Color(0xFF262626) : const Color(0xFFE9ECEF), 
+      activeThemeColor, 
+      0.06
+    ) ?? const Color(0xFFE9ECEF);
     final Color otherTextColor = isDark ? Colors.white : const Color(0xFF1E293B);
 
     return Scaffold(
@@ -178,7 +191,7 @@ class _ChatScreenState extends State<ChatScreen> {
         title: Row(
           children: [
             CircleAvatar(
-              backgroundColor: Colors.blue.shade100,
+              backgroundColor: activeThemeColor.withOpacity(0.2),
               radius: 18,
               child: Text(
                 widget.contact.avatarInitial,
@@ -198,7 +211,8 @@ class _ChatScreenState extends State<ChatScreen> {
                     widget.contact.phoneNumber,
                     style: TextStyle(
                       fontSize: 12,
-                      color: subtextColor,
+                      fontWeight: FontWeight.bold,
+                      color: activeThemeColor,
                     ),
                   ),
                 ],
@@ -331,19 +345,19 @@ class _ChatScreenState extends State<ChatScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               child: Row(
                 children: [
-                  Icon(Icons.edit, size: 18, color: isDark ? Colors.blue.shade300 : Colors.blue),
+                  Icon(Icons.edit, size: 18, color: activeThemeColor),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Editing message...',
                       style: TextStyle(
-                        color: isDark ? Colors.blue.shade300 : Colors.blue,
+                        color: activeThemeColor,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
                   IconButton(
-                    icon: Icon(Icons.close, size: 18, color: subtextColor),
+                    icon: Icon(Icons.close, size: 18, color: activeThemeColor),
                     onPressed: _cancelEditing,
                   )
                 ],
@@ -389,7 +403,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 const SizedBox(width: 8),
                 CircleAvatar(
-                  backgroundColor: Colors.blue,
+                  backgroundColor: activeThemeColor,
                   child: IconButton(
                     icon: Icon(
                       _editingMessage != null ? Icons.check : Icons.send,

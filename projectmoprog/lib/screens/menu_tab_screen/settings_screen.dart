@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'account_settings_screen.dart';
+import 'chat_settings_screen.dart';
 import '../../providers/theme_provider.dart';
 import '../../services/auth_service.dart';
 import '../../services/notification_service.dart';
@@ -451,6 +452,44 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               endIndent: 16,
                               color: dividerColor,
                             ),
+                            
+                            ListTile(
+                              hoverColor: hoverColor,
+                              splashColor: splashColor,
+                              title: AnimatedDefaultTextStyle(
+                                duration: _animDuration,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                  color: isDark ? Colors.white : Colors.black87,
+                                ),
+                                child: const Text('Chat Settings'),
+                              ),
+                              trailing: AnimatedSwitcher(
+                                duration: _animDuration,
+                                child: Icon(
+                                  Icons.color_lens,
+                                  key: ValueKey<bool>(isDark),
+                                  size: 18,
+                                  color: isDark ? Colors.blue.shade300 : Colors.blue.shade600,
+                                ),
+                              ),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const ChatSettingsScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+
+                            Divider(
+                              height: 1,
+                              indent: 16,
+                              endIndent: 16,
+                              color: dividerColor,
+                            ),
 
                             ListTile(
                               hoverColor: hoverColor,
@@ -469,7 +508,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ),
                               onTap: () => _logout(context),
                             ),
-                          ],
+                          ],           
                         ),
                       ),
                     ),
