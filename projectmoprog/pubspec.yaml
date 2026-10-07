@@ -39,6 +39,7 @@ dependencies:
   flutter_dotenv: ^6.0.1
   lorem_ipsum_generator: ^0.0.3
   provider: ^6.1.5+1
+  crypto: ^3.0.3
 
 dev_dependencies:
   flutter_test:

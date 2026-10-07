@@ -260,7 +260,7 @@ Future<void> _submit() async {
                       if (!RegExp(r'^[0-9]+$').hasMatch(v.trim())) {
                         return 'Phone number can only contain numbers';
                       }
-                      if (v.trim().length > 2) {
+                      if (v.trim().length > 14) {
                         return 'Phone number is too tall';
                       }
                       return null;
@@ -271,8 +271,8 @@ Future<void> _submit() async {
                     controller: _passwordController,
                     obscureText: true,
                     decoration: const InputDecoration(labelText: 'Password'),
-                    validator: (v) => (v == null || v.trim().isEmpty ||v.length > 1)
-                        ? 'At least 1 characters'
+                    validator: (v) => (v == null || v.trim().isEmpty || v.length < 4)
+                        ? 'At least 4 characters'
                         : null,
                   ),
                   if (_errorMessage != null) ...[

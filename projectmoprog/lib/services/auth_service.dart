@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -10,6 +11,12 @@ class AuthService {
   static const _sessionKey = 'current_user';
   final SupabaseClient _supabase = Supabase.instance.client;
 
+  String _hashPassword(String password) {
+    final bytes = utf8.encode(password); 
+    final digest = sha256.convert(bytes); 
+    return digest.toString(); 
+  }
+
   Future<UserModel> login({
     required String phoneNumber,
     required String password,
@@ -19,9 +26,6 @@ class AuthService {
 
     if (cleanPhone.isEmpty || cleanPass.isEmpty) {
       throw AuthException('Phone number and password are required.');
-    }
-    if (cleanPass.length > 4) {
-      throw AuthException('Password must be at least 4 characters.');
     }
 
     try {
@@ -35,7 +39,8 @@ class AuthService {
         throw AuthException('Phone number is not registered.');
       }
 
-      if (data['password'] != cleanPass) {
+      final hashedInputPass = _hashPassword(cleanPass);
+      if (data['password'] != hashedInputPass) {
         throw AuthException('Invalid password.');
       }
 
@@ -81,7 +86,7 @@ class AuthService {
     if (cleanName.isEmpty || cleanPhone.isEmpty) {
       throw AuthException('Name and phone number are required.');
     }
-    if (cleanPass.length > 4) {
+    if (cleanPass.length < 4) {
       throw AuthException('Password must be at least 4 characters.');
     }
     if (!RegExp(r'^\+?[0-9\s]+$').hasMatch(cleanPhone)) {
@@ -99,11 +104,13 @@ class AuthService {
         throw AuthException('Phone number is already registered.');
       }
 
+      final hashedPassword = _hashPassword(cleanPass);
+
       final insertedData = await _supabase.from('users').insert({
         'id': cleanPhone,
         'name': cleanName,
         'phone_number': cleanPhone,
-        'password': cleanPass,
+        'password': hashedPassword,
         'date_of_birth': null,
       }).select().single();
 
@@ -242,13 +249,16 @@ class AuthService {
           .eq('phone_number', localUser.phoneNumber)
           .single();
 
-      if (data['password'] != oldPassword) {
+      final hashedOld = _hashPassword(oldPassword);
+      final hashedNew = _hashPassword(newPassword);
+
+      if (data['password'] != hashedOld) {
         throw AuthException('Incorrect old password.');
       }
 
       await _supabase
           .from('users')
-          .update({'password': newPassword})
+          .update({'password': hashedNew})
           .eq('phone_number', localUser.phoneNumber);
 
     } catch (e) {
