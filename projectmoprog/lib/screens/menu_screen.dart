@@ -236,44 +236,6 @@ class _MenuScreenState extends State<MenuScreen> {
                     _fetchUnreadNotifications();
                   },
                 ),
-                MenuItemTile(
-                  icon: Icons.remove_red_eye_outlined,
-                  title: 'Who Viewed My Profile',
-                  trailing: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CircleAvatar(radius: 4, backgroundColor: Colors.red),
-                      SizedBox(width: 6),
-                      Icon(Icons.chevron_right_rounded, color: Color(0xFFCBD5E1), size: 22),
-                    ],
-                  ),
-                  onTap: () {},
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 16),
-            
-            MenuGroupCard(
-              children: [
-                MenuItemTile(
-                  icon: Icons.grid_view_rounded,
-                  title: 'Shortcuts',
-                  showDivider: true,
-                  onTap: () {},
-                ),
-                MenuItemTile(
-                  icon: Icons.mark_email_unread_rounded,
-                  title: 'Spam SMS Protection',
-                  showDivider: true,
-                  onTap: () {},
-                ),
-                MenuItemTile(
-                  icon: Icons.phone_disabled_rounded,
-                  title: 'Spam Call Settings',
-                  showDivider: true,
-                  onTap: () {},
-                ),
               ],
             ),
 
@@ -281,36 +243,6 @@ class _MenuScreenState extends State<MenuScreen> {
 
             MenuGroupCard(
               children: [
-                SimpleMenuTile(
-                  icon: Icons.workspace_premium_outlined,
-                  title: 'Premium and Plans',
-                  onTap: () {},
-                ),
-                SimpleMenuTile(
-                  icon: Icons.pie_chart_outline_rounded,
-                  title: 'Usage Limits',
-                  onTap: () {},
-                ),
-                SimpleMenuTile(
-                  icon: Icons.public_rounded,
-                  title: 'Getcontact Web',
-                  onTap: () {},
-                ),
-                SimpleMenuTile(
-                  icon: Icons.support_agent_rounded,
-                  title: 'Community / Help',
-                  onTap: () {},
-                ),
-                SimpleMenuTile(
-                  icon: Icons.chat_bubble_outline_rounded,
-                  title: 'Comments',
-                  onTap: () {},
-                ),
-                SimpleMenuTile(
-                  icon: Icons.sms_outlined,
-                  title: 'WhatsApp Bot',
-                  onTap: () {},
-                ),
                 SimpleMenuTile(
                   icon: Icons.settings_outlined,
                   title: 'Settings',
