@@ -27,6 +27,9 @@ class AuthService {
     if (cleanPhone.isEmpty || cleanPass.isEmpty) {
       throw AuthException('Phone number and password are required.');
     }
+    if (cleanPass.length < 7) {
+      throw AuthException('Password must be at least 8 characters.');
+    }
 
     try {
       final data = await _supabase
@@ -86,8 +89,8 @@ class AuthService {
     if (cleanName.isEmpty || cleanPhone.isEmpty) {
       throw AuthException('Name and phone number are required.');
     }
-    if (cleanPass.length < 4) {
-      throw AuthException('Password must be at least 4 characters.');
+    if (cleanPass.length < 7) {
+      throw AuthException('Password must be at least 8 characters.');
     }
     if (!RegExp(r'^\+?[0-9\s]+$').hasMatch(cleanPhone)) {
       throw AuthException('Phone number can only contain numbers');
@@ -107,6 +110,7 @@ class AuthService {
       final hashedPassword = _hashPassword(cleanPass);
 
       final insertedData = await _supabase.from('users').insert({
+        'id': cleanPhone,
         'name': cleanName,
         'phone_number': cleanPhone,
         'password': hashedPassword,
