@@ -56,11 +56,11 @@ class ContactService {
 
   Future<List<String>> getMySavedNames(String myPhoneNumber) async {
     final response = await Supabase.instance.client
-        .from('savedContacts')
-        .select('savedName')
-        .eq('savedPhoneNumber', myPhoneNumber);
+        .from('contacts')
+        .select('name')
+        .eq('phoneNumber', myPhoneNumber);
     final List<String> savedNames = response
-        .map((data) => data['savedName'] as String)
+        .map((data) => data['name'] as String)
         .toList();
     return savedNames.toSet().toList();
   }
