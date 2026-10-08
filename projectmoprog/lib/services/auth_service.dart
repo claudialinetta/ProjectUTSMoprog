@@ -110,6 +110,7 @@ class AuthService {
       final hashedPassword = _hashPassword(cleanPass);
 
       final insertedData = await _supabase.from('users').insert({
+        'id': cleanPhone,
         'name': cleanName,
         'phone_number': cleanPhone,
         'password': hashedPassword,
